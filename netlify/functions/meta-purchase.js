@@ -17,7 +17,6 @@ exports.handler = async function (event) {
       return { statusCode: 500, body: JSON.stringify({ error: 'Falta configurar META_PIXEL_ID o META_CAPI_TOKEN en Netlify' }) };
     }
 
-    // Meta pide el teléfono en formato E.164 (solo dígitos, con código de país) y hasheado en SHA-256.
     const telefonoLimpio = String(telefono || '').replace(/\D/g, '');
     const userData = {};
     if (telefonoLimpio) {
@@ -49,6 +48,7 @@ exports.handler = async function (event) {
       }
     );
     const data = await resp.json();
+    console.log('Respuesta de Meta:', resp.status, JSON.stringify(data));
 
     return {
       statusCode: resp.ok ? 200 : 500,
