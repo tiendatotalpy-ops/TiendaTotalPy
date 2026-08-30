@@ -34,9 +34,10 @@ exports.handler = async function (event) {
             currency: 'PYG',
             value: Number(monto) || 0,
             order_id: String(numero || '')
-          }
+             }
         }
-      ]
+      ],
+      test_event_code: 'TEST76773'
     };
 
     const resp = await fetch(
