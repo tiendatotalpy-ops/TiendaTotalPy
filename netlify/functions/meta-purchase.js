@@ -37,7 +37,7 @@ exports.handler = async function (event) {
              }
         }
       ],
-      test_event_code: 'TEST76773'
+     
     };
 
     const resp = await fetch(
