@@ -2666,7 +2666,7 @@ async function cambiarEstado(id,newE){
     fetch('/.netlify/functions/meta-purchase',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({telefono:p.telefono||'',monto:p.montoFinal||0,numero:p.numero||id})
+      body:JSON.stringify({telefono:p.telefono||'',monto:p.montoFinal||0,numero:p.numero||id,fbc:p.fbc||'',fbp:p.fbp||'',clientIp:p.clientIp||'',userAgent:p.clientUserAgent||''})
     }).catch(()=>{/* si falla no bloquea el flujo del pedido */});
   }
   if(newE==='entregado'||newE==='rechazado'){
