@@ -297,6 +297,37 @@ select option{background:var(--surface)}
 .estado-pill.active-green{background:rgba(126,217,87,.15);border-color:var(--green);color:var(--green2)}
 .estado-pill.active-orange{background:rgba(255,162,77,.15);border-color:#ffa24d;color:#ffa24d}
 .estado-pill.active-red{background:rgba(255,92,92,.15);border-color:var(--red);color:var(--red)}
+
+/* ── LEADS ── */
+.ld-pills{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;padding-bottom:2px}
+.ld-pill{flex:0 0 auto;background:var(--card);border:1px solid var(--border);color:var(--muted);border-radius:20px;padding:7px 12px;font-size:calc(var(--fs-mult,1)*12px);font-weight:700;cursor:pointer}
+.ld-pill.active{background:var(--green);border-color:var(--green);color:#0d1a08}
+.ld-pill .ld-n{display:inline-block;margin-left:4px;opacity:.85}
+.ld-dels{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-bottom:12px}
+.ld-del{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px;cursor:pointer;text-align:center}
+.ld-del.active{border:2px solid var(--green)}
+.ld-del-name{font-size:calc(var(--fs-mult,1)*11px);font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.ld-del-n{font-size:calc(var(--fs-mult,1)*24px);font-weight:800;color:var(--text);line-height:1.2}
+.ld-del-mt{font-size:calc(var(--fs-mult,1)*10px);color:var(--muted)}
+.ld-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px}
+.ld-card.ld-conf{border-left:4px solid var(--blue)}
+.ld-card.ld-ent{border-left:4px solid var(--green)}
+.ld-card.ld-canc{border-left:4px solid var(--red);opacity:.75}
+.ld-card.ld-tom{border-left:4px solid var(--yellow)}
+.ld-top{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:4px}
+.ld-num{font-size:calc(var(--fs-mult,1)*12px);color:var(--muted);font-weight:700}
+.ld-cli{font-size:calc(var(--fs-mult,1)*15px);font-weight:800;color:var(--text)}
+.ld-sub{font-size:calc(var(--fs-mult,1)*12px);color:var(--muted);margin-top:2px}
+.ld-res{font-size:calc(var(--fs-mult,1)*13px);color:var(--text);margin:6px 0}
+.ld-monto{font-size:calc(var(--fs-mult,1)*16px);font-weight:800;color:var(--green2)}
+.ld-row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center}
+.ld-lbl{font-size:calc(var(--fs-mult,1)*10px);font-weight:800;color:var(--muted);text-transform:uppercase;width:100%;margin-bottom:-2px}
+.ld-b{flex:1;min-width:64px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:9px 4px;font-size:calc(var(--fs-mult,1)*12px);font-weight:700;cursor:pointer}
+.ld-b.on{background:var(--green);border-color:var(--green);color:#0d1a08}
+.ld-b.b-conf.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.ld-b.b-canc.on{background:var(--red);border-color:var(--red);color:#fff}
+.ld-b.b-wa{background:#25d366;border-color:#25d366;color:#fff;flex:0 0 auto;padding:9px 14px}
+.ld-kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -322,20 +353,36 @@ select option{background:var(--surface)}
     </div>
   </div>
 
-  <div class="mb-grid2 mb-grid-hero">
-    <div class="mb-card tag-card" style="cursor:pointer" onclick="irADashPedidosHoy()">
-      <div class="mb-icon mb-icon-dark"><svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="width:19px;height:19px"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M9 3v2a1 1 0 001 1h4a1 1 0 001-1V3M9 12l2 2 4-4"/></svg></div>
-      <div class="mb-label">Pedidos del Día</div>
-      <div class="mb-value" id="dash-pedidos-hoy">0</div>
-      <div class="mb-sub" style="color:var(--green2);font-weight:700">Toca para ver →</div>
+  <div class="ld-kpis">
+    <div class="mb-card" style="cursor:pointer;margin:0" onclick="showPage('leads')">
+      <div class="mb-icon mb-icon-dark">📥</div>
+      <div class="mb-label">Leads del Día</div>
+      <div class="mb-value" id="dash-leads-hoy">0</div>
+      <div class="mb-sub" style="color:var(--green2);font-weight:700">Ver leads →</div>
     </div>
-    <div class="mb-card tag-card" style="cursor:pointer" onclick="irADashEntregarHoy()">
-      <div class="mb-icon mb-icon-green"><svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="width:19px;height:19px"><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg></div>
-      <div class="mb-label">A Entregar Hoy</div>
-      <div class="mb-value" id="dash-entregar-hoy">0</div>
-      <div class="mb-sub" style="color:var(--green2);font-weight:700">Toca para ver →</div>
+    <div class="mb-card" style="margin:0">
+      <div class="mb-icon mb-icon-green">✅</div>
+      <div class="mb-label">Ventas del Día</div>
+      <div class="mb-value" id="dash-ventas-hoy">0</div>
+      <div class="mb-sub" id="dash-conv-hoy">Confirmadas hoy</div>
+    </div>
+    <div class="mb-card" style="margin:0">
+      <div class="mb-icon mb-icon-green">💰</div>
+      <div class="mb-label">Facturado Hoy</div>
+      <div class="mb-value mb-value-sm" id="dash-facturado-hoy">₲ 0</div>
+      <div class="mb-sub">Solo ventas confirmadas</div>
+    </div>
+    <div class="mb-card" style="margin:0">
+      <div class="mb-icon mb-icon-dark">📅</div>
+      <div class="mb-label">Facturado en el Mes</div>
+      <div class="mb-value mb-value-sm" id="d-facturado-mes">₲ 0</div>
+      <div class="mb-sub">Solo ventas confirmadas</div>
     </div>
   </div>
+  <div class="mb-card" style="cursor:pointer" onclick="irADashEntregarHoy()">
+    <div class="mb-row"><div class="mb-label" style="margin:0">🚚 A entregar hoy</div><div style="font-size:20px;font-weight:800;color:var(--green2)" id="dash-entregar-hoy">0</div></div>
+  </div>
+
 
   <div class="mb-pills">
     <button class="mb-pill active" id="df-hoy" onclick="setDashPeriod('hoy')">Hoy</button>
@@ -353,6 +400,9 @@ select option{background:var(--surface)}
       <div><div class="mb-label">Hasta</div><input type="date" id="d-hasta" onchange="renderDashboard()"></div>
     </div>
   </div>
+
+  <div class="mb-sec-title">🏆 Top 10 Más Vendidos <span style="font-weight:400;font-size:11px;color:var(--muted)">(ventas confirmadas del período)</span></div>
+  <div class="mb-card"><div id="top5-list"><div class="empty">Sin datos</div></div></div>
 
   <div class="mb-card">
     <div class="mb-row" style="margin-bottom:2px">
@@ -394,11 +444,7 @@ select option{background:var(--surface)}
     <div class="mb-sub">Facturación − Costo Mercadería − ₲30.000 publicidad − ₲25.000 envío, por pedido</div>
   </div>
 
-  <div class="mb-card">
-    <div class="mb-icon mb-icon-green"><svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="width:19px;height:19px"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div>
-    <div class="mb-label">Total Facturado en el Mes</div>
-    <div class="mb-value" id="d-facturado-mes">₲ 0</div>
-  </div>
+
 
   <div id="d-sin-producto" class="mb-alert" style="display:none"></div>
 
@@ -424,9 +470,20 @@ select option{background:var(--surface)}
     <div style="font-size:11px;color:var(--muted);margin-top:6px" id="meta-pct-txt">0% de la meta</div>
   </div>
 
-  <div class="mb-sec-title">🏆 Top 5 Más Vendidos</div>
-  <div class="mb-card"><div id="top5-list"><div class="empty">Sin datos</div></div></div>
 </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ LEADS -->
+<div class="page" id="page-leads">
+  <div class="mb-shell">
+  <div class="mb-header"><div><div class="mb-h-title">Leads</div><div class="mb-h-sub">Pedidos que entran de Shopify y a mano</div></div></div>
+  <div class="date-selector" style="margin-bottom:10px"><input type="date" id="ld-fecha" onchange="renderLeads()"></div>
+  <div class="ld-pills" id="ld-pills"></div>
+  <div class="mb-label" style="margin:2px 0 6px">🚚 Entregas del día por delivery</div>
+  <div class="ld-dels" id="ld-dels"></div>
+  <div id="ld-titulo" class="mb-label" style="margin:4px 0 8px"></div>
+  <div id="ld-list"><div class="loading">Cargando...</div></div>
+  </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════ PEDIDOS -->
@@ -476,7 +533,7 @@ select option{background:var(--surface)}
     <div class="form-group"><label class="form-label">💰 Precio Final (₲)</label><input type="number" id="p-monto" placeholder="0" oninput="this.dataset.manual=1"></div>
     <div class="form-group"><label class="form-label">Estado</label>
       <select id="p-estado">
-        <option value="tomado">📋 Tomado</option>
+        <option value="tomado">📋 Tomado (lead, no descuenta stock)</option>
         <option value="confirmado">🆗 Confirmado</option>
         <option value="entregado">✅ Entregado</option>
         <option value="rechazado">❌ Rechazado</option>
@@ -934,6 +991,9 @@ select option{background:var(--surface)}
   <button class="nav-btn active" onclick="showPage('dashboard')">
     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard
   </button>
+  <button class="nav-btn" onclick="showPage('leads')">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>Leads<span id="nav-leads-badge" style="display:none;position:absolute;top:4px;right:calc(50% - 20px);background:var(--red);color:#fff;border-radius:10px;font-size:9px;padding:1px 5px;font-weight:800"></span>
+  </button>
   <button class="nav-btn" onclick="showPage('pedidos')">
     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>Pedidos
   </button>
@@ -1206,6 +1266,8 @@ function onData(src){
   const p=document.querySelector('#admin-ui .page.active');if(!p)return;
   const id=p.id.replace('page-','');
   if(id==='dashboard')renderDashboard();
+  if(id==='leads'&&src==='pedidos')renderLeads();
+  if(src==='pedidos')actualizarBadgeLeads();
   if(id==='caja'){renderCajaSaldo();if(src==='movimientos')renderTodosResumenes();if(src==='movimientos'||src==='cierres'){renderCierreHoy();renderHistorialCierres();}}
   if(id==='productos'&&src==='productos'){
     renderProdList();
@@ -1283,10 +1345,11 @@ function showPage(name){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
-  ['dashboard','pedidos','caja','productos','config'].forEach((n,i)=>{
+  ['dashboard','leads','pedidos','caja','productos','config'].forEach((n,i)=>{
     if(n===name)document.querySelectorAll('.nav-btn')[i].classList.add('active');
   });
   if(name==='dashboard')renderDashboard();
+  if(name==='leads'){const lf=document.getElementById('ld-fecha');if(lf&&!lf.value)lf.value=today();renderLeads();}
   if(name==='pedidos'){arts=[];renderArts();document.getElementById('p-fecha').value=today();switchTab('pedidos','lista');}
   if(name==='caja'){renderCajaSaldo();}
   if(name==='productos'){renderProdList();fillStockSel();fillCompraSel();}
@@ -1305,10 +1368,11 @@ function showPageSilent(name){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
-  ['dashboard','pedidos','caja','productos','config'].forEach((n,i)=>{
+  ['dashboard','leads','pedidos','caja','productos','config'].forEach((n,i)=>{
     if(n===name)document.querySelectorAll('.nav-btn')[i].classList.add('active');
   });
   if(name==='dashboard')renderDashboard();
+  if(name==='leads')renderLeads();
 }
 
 function switchTab(page,tab){
@@ -1405,12 +1469,18 @@ function irADashEntregarHoy(){
 function renderDashboard(){
   // Contadores fijos de HOY, independientes del filtro de período de arriba
   const hoyStr=today();
-  const dashPedidosHoy=pedidos.filter(p=>!p.interior&&p.fecha===hoyStr&&p.estado!=='rechazado').length;
   const dashEntregarHoy=pedidos.filter(p=>!p.interior&&(p.fechaEntrega||p.fecha)===hoyStr&&p.estado!=='rechazado').length;
-  const elPH=document.getElementById('dash-pedidos-hoy');
   const elEH=document.getElementById('dash-entregar-hoy');
-  if(elPH)elPH.textContent=dashPedidosHoy;
   if(elEH)elEH.textContent=dashEntregarHoy;
+  // Leads = todo lo que entró hoy (cualquier estado). Ventas = confirmadas/entregadas, por fecha de confirmación.
+  const leadsHoy=pedidos.filter(p=>p.fecha===hoyStr).length;
+  const ventasHoyArr=pedidos.filter(p=>esVenta(p)&&fechaVenta(p)===hoyStr);
+  const facturadoHoy=ventasHoyArr.reduce((s,p)=>s+(p.montoFinal||0),0);
+  const setT=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  setT('dash-leads-hoy',leadsHoy);
+  setT('dash-ventas-hoy',ventasHoyArr.length);
+  setT('dash-facturado-hoy',fmt(facturadoHoy));
+  setT('dash-conv-hoy',leadsHoy?`${Math.round(ventasHoyArr.length/leadsHoy*100)}% de los leads de hoy`:'Confirmadas hoy');
 
   const{from,to}=getPeriodDates();
   const inRange=f=>f&&f>=from&&f<=to;
@@ -1435,7 +1505,7 @@ function renderDashboard(){
 
   // Total facturado en el mes (fijo, no depende del filtro de período de arriba)
   const mesActual=today().slice(0,7);
-  const facturadoMes=pedidos.filter(p=>p.fecha&&p.fecha.startsWith(mesActual)&&p.estado!=='rechazado').reduce((s,p)=>s+(p.montoFinal||0),0);
+  const facturadoMes=pedidos.filter(p=>esVenta(p)&&(fechaVenta(p)||'').startsWith(mesActual)).reduce((s,p)=>s+(p.montoFinal||0),0);
 
   document.getElementById('d-pedidos').textContent=cantPedidos;
   document.getElementById('d-unidades-card').textContent=cantUnidades;
@@ -1447,15 +1517,22 @@ function renderDashboard(){
   gEl.style.fontSize='calc(var(--fs-mult,1)*28px)';
   document.getElementById('d-facturado-mes').textContent=fmt(facturadoMes);
 
-  // Top 5 (del período seleccionado, solo entregados)
+  // Top 10 (del período seleccionado, ventas confirmadas o entregadas)
   const vendMap={};
-  pedidos.filter(p=>inRange(p.fecha)&&p.estado==='entregado').forEach(p=>{
+  pedidos.filter(p=>esVenta(p)&&inRange(fechaVenta(p))).forEach(p=>{
+    (p.arts||[]).forEach(a=>{
+      const k=a.pid||a.nombre;
+      vendMap[k]=(vendMap[k]||{nombre:a.nombre,cant:0});
+      vendMap[k].cant+=a.cant;
+    });
+  });
+  if(false)pedidos.forEach(p=>{
     (p.arts||[]).forEach(a=>{
       vendMap[a.pid]=(vendMap[a.pid]||{nombre:a.nombre,cant:0});
       vendMap[a.pid].cant+=a.cant;
     });
   });
-  const top5=Object.values(vendMap).sort((a,b)=>b.cant-a.cant).slice(0,5);
+  const top5=Object.values(vendMap).sort((a,b)=>b.cant-a.cant).slice(0,10);
   const t5el=document.getElementById('top5-list');
   t5el.innerHTML=top5.length?top5.map((p,i)=>`<div class="top5-item">
     <div class="top5-rank">${i+1}</div>
@@ -1700,19 +1777,49 @@ function reconocerPedido(){
   showToast((prodEncontrado?'✅ Reconocido':'⚠️ No reconoció producto')+` · Catálogo: ${productos.length} prod. · Encontrados: ${itemsEncontrados.length}`);
 }
 let _editPedidoId=null;
+// ── STOCK ────────────────────────────────────────────────────────────────────
+// Regla: el stock se descuenta cuando el pedido se CONFIRMA (o se entrega) y vuelve
+// cuando se cancela/rechaza. Cada pedido guarda stockDescontado:true/false para no
+// descontar dos veces. Pedidos viejos sin ese campo: se asume la regla anterior
+// (ya descontado si no está rechazado).
+function esVenta(p){return p&&(p.estado==='confirmado'||p.estado==='entregado');}
+function fechaVenta(p){return p.fechaConfirmado||p.fecha||'';}
+function stockYaDescontado(p){return p.stockDescontado!==undefined?!!p.stockDescontado:(p.estado!=='rechazado');}
 async function ajustarStock(arts,sentido){
-  // sentido=-1 para descontar (al crear/guardar), sentido=+1 para devolver (al editar/borrar)
-  for(const a of arts){
+  // sentido=-1 descuenta, +1 devuelve. Usa transacciones de Firebase sobre el número
+  // de stock exacto, así nunca se pisa con otro cambio que llegue al mismo tiempo.
+  const faltantes=[];
+  for(const a of(arts||[])){
+    if(!a||!a.pid)continue;
     const p=productos.find(x=>x.id===a.pid);if(!p)continue;
-    if(a.vid){
-      const v=(p.variantes||[]).find(v=>v.id===a.vid);if(!v)continue;
-      v.stock+=sentido*a.cant;
-    } else {
-      // Producto sin variantes: el stock vive directo en el producto
-      p.stock=(p.stock||0)+sentido*a.cant;
-    }
-    await fbSet('productos/'+p.id,p);
+    const cant=(a.cant||1)*sentido;
+    const vars=p.variantes||[];
+    let idx=a.vid?vars.findIndex(v=>v.id===a.vid):-1;
+    if(idx<0&&vars.length&&a.vnom){idx=vars.findIndex(v=>(v.color||'').toLowerCase()===(a.vnom||'').toLowerCase());}
+    if(idx<0&&vars.length===1)idx=0;
+    let ref;
+    if(idx>=0)ref=db.ref('productos/'+p.id+'/variantes/'+idx+'/stock');
+    else if(!vars.length)ref=db.ref('productos/'+p.id+'/stock');
+    else{faltantes.push(a.nombre);continue;} // tiene colores pero no sabemos cuál
+    try{
+      const r=await ref.transaction(s=>(Number(s)||0)+cant);
+      if(sentido<0&&r&&r.snapshot&&r.snapshot.val()<0)faltantes.push(a.nombre+' (quedó en '+r.snapshot.val()+')');
+      setSyncStatus(true);
+    }catch(e){setSyncStatus(false);}
   }
+  return faltantes;
+}
+// Aplica el stock según el nuevo estado y devuelve el valor de stockDescontado a guardar
+async function aplicarStockPorEstado(p,newE,arts){
+  const debe=(newE==='confirmado'||newE==='entregado');
+  const ya=stockYaDescontado(p);
+  if(debe&&!ya){
+    const f=await ajustarStock(arts||p.arts,-1);
+    if(f.length)showToast('⚠️ Revisá stock: '+f.join(', '));
+    return true;
+  }
+  if(!debe&&ya){await ajustarStock(arts||p.arts,+1);return false;}
+  return ya;
 }
 async function pegarUbicacion(){
   try{
@@ -1738,10 +1845,17 @@ async function savePedido(){
   if(_editPedidoId){
     // Modo edición: devolver el stock de los artículos viejos y descontar el de los nuevos
     const pedidoOriginal=pedidos.find(x=>x.id===_editPedidoId);
-    if(pedidoOriginal&&pedidoOriginal.estado!=='rechazado'){
+    // Devolver lo que se había descontado con los artículos viejos y volver a aplicar con los nuevos
+    if(pedidoOriginal&&stockYaDescontado(pedidoOriginal)){
       await ajustarStock(pedidoOriginal.arts||[],+1);
     }
-    if(estado!=='rechazado'){
+    let stockDescontadoEd=false;
+    if(estado==='confirmado'||estado==='entregado'){
+      const f=await ajustarStock(arts,-1);
+      if(f.length)showToast('⚠️ Revisá stock: '+f.join(', '));
+      stockDescontadoEd=true;
+    }
+    if(false){
       for(const a of arts){
         const p=productos.find(x=>x.id===a.pid);if(!p)continue;
         if(a.vid){
@@ -1766,15 +1880,22 @@ async function savePedido(){
     // momento de editar, no la hora real en que se tomó el pedido). Se mantiene la que ya tenía,
     // salvo que cambie el día tomado explícitamente — para cambiar la entrega existe el botón 📅 aparte.
     const fechaEntrega=(fecha!==pedidoOriginal?.fecha)?calcFechaEntrega(fecha):(pedidoOriginal?.fechaEntrega||fecha);
-    await db.ref('pedidos/'+_editPedidoId).update({fecha,fechaEntrega,cliente,telefono,ciudad,ubicacion,nota,arts,resumen,montoFinal,estado});
+    const extraEd={stockDescontado:stockDescontadoEd};if(esVenta({estado})&&!pedidoOriginal?.fechaConfirmado)extraEd.fechaConfirmado=today();
+    await db.ref('pedidos/'+_editPedidoId).update({fecha,fechaEntrega,cliente,telefono,ciudad,ubicacion,nota,arts,resumen,montoFinal,estado,...extraEd});
     showToast(`✅ Pedido #${pedidoOriginal?.numero||''} actualizado`);
     cancelarEdicionPedido();
     switchTab('pedidos','lista');
     return;
   }
 
-  // Modo creación normal
-  if(estado!=='rechazado'){
+  // Modo creación normal: solo descuenta si se registra ya confirmado/entregado
+  let stockDescontadoNuevo=false;
+  if(estado==='confirmado'||estado==='entregado'){
+    const f=await ajustarStock(arts,-1);
+    if(f.length)showToast('⚠️ Revisá stock: '+f.join(', '));
+    stockDescontadoNuevo=true;
+  }
+  if(false){
     for(const a of arts){
       const p=productos.find(x=>x.id===a.pid);if(!p)continue;
       if(a.vid){
@@ -1791,7 +1912,9 @@ async function savePedido(){
   const resumen=arts.map(a=>`${a.nombre}${a.vnom?' ('+a.vnom+')':''} x${a.cant}`).join(', ');
   const fechaEntrega=calcFechaEntrega(fecha);
   const numero=await siguienteNumeroPedido();
-  await fbPush('pedidos',{fecha,fechaEntrega,numero,cliente,telefono,ciudad,ubicacion,nota,arts,resumen,montoFinal,estado,creadoEn:new Date().toISOString()});
+  const nuevoP={fecha,fechaEntrega,numero,cliente,telefono,ciudad,ubicacion,nota,arts,resumen,montoFinal,estado,origen:'manual',stockDescontado:stockDescontadoNuevo,creadoEn:new Date().toISOString()};
+  if(stockDescontadoNuevo)nuevoP.fechaConfirmado=today();
+  await fbPush('pedidos',nuevoP);
   // Notificar a la app (igual que Shopify)
   const nid=uid();
   await fbSet('notificaciones/'+nid,{id:nid,pedidoId:nid,numero,cliente,montoFinal,fecha:new Date().toISOString(),leido:false,origen:'manual'});
@@ -1972,6 +2095,7 @@ async function importarExcelDelivery(event){
         const updates={};
         let cambio=false;
         if(nuevoEstado&&nuevoEstado!==p.estado){
+          updates.stockDescontado=await aplicarStockPorEstado(p,nuevoEstado);
           updates.estado=nuevoEstado;
           updates.fechaResolucion=today();
           cambio=true;
@@ -2073,9 +2197,11 @@ function renderPedidosList(){
         </select>
         <select onchange="setDeliveryPedido('${p.id||p._fbKey}',this.value)" style="font-size:calc(var(--fs-mult,1)*11px);padding:8px 3px;text-align:center">
           <option value="">🚚 Delivery</option>
+          <option value="tobi" ${p.delivery==='tobi'?'selected':''}>Tobi</option>
           <option value="dam" ${p.delivery==='dam'?'selected':''}>DAM</option>
-          <option value="alterno" ${p.delivery==='alterno'?'selected':''}>Ozuna</option>
+          <option value="tsi" ${p.delivery==='tsi'?'selected':''}>TSI</option>
           <option value="facu" ${p.delivery==='facu'?'selected':''}>Propio</option>
+          ${p.delivery==='alterno'?'<option value="alterno" selected>Ozuna</option>':''}
         </select>
         <select onchange="setCampaniaPedido('${p.id||p._fbKey}',this.value)" style="font-size:calc(var(--fs-mult,1)*11px);padding:8px 3px;text-align:center">
           <option value="">📊 Campaña</option>
@@ -2616,11 +2742,15 @@ async function confirmarReprogramar(){
   if(!nuevaFecha){showToast('⚠️ Elegí una fecha');return;}
   const p=pedidos.find(x=>x.id===_reprogramarId||x._fbKey===_reprogramarId);if(!p)return;
   const fk=p._fbKey||p.id;
+  const flagR=await aplicarStockPorEstado(p,'confirmado');
+  await fbSet('pedidos/'+fk+'/stockDescontado',flagR);
+  if(!p.fechaConfirmado)await fbSet('pedidos/'+fk+'/fechaConfirmado',today());
   await fbSet('pedidos/'+fk+'/estado','confirmado');
   await fbSet('pedidos/'+fk+'/reprogramado',true);
   await fbSet('pedidos/'+fk+'/fechaEntrega',nuevaFecha);
   showToast('📅 Reprogramado para '+nuevaFecha);
   cerrarReprogramar();
+  if(typeof renderLeads==='function')renderLeads();
 }
 async function setDeliveryPedido(id,valor){
   const p=pedidos.find(x=>x.id===id||x._fbKey===id);if(!p)return;
@@ -2633,11 +2763,15 @@ async function setCampaniaPedido(id,valor){
   await fbSet('pedidos/'+fk+'/campania',valor||null);
 }
 async function cambiarEstado(id,newE){
-  const p=pedidos.find(x=>x.id===id);
+  const p=pedidos.find(x=>x.id===id||x._fbKey===id);
   if(!p){showToast('⚠️ Pedido no encontrado');return;}
   if(p.estado===newE&&!p.reprogramado){showToast('ℹ️ El pedido ya tiene ese estado');return;}
+  id=p._fbKey||p.id;
   const oldE=p.estado;
-  // Ajuste de stock solo si el pedido tiene artículos reconocidos en el catálogo
+  const nuevoFlag=await aplicarStockPorEstado(p,newE);
+  await fbSet('pedidos/'+id+'/stockDescontado',nuevoFlag);
+  if((newE==='confirmado'||newE==='entregado')&&!p.fechaConfirmado)await fbSet('pedidos/'+id+'/fechaConfirmado',today());
+  if(false)
   for(const a of(p.arts||[])){
     if(!a.pid)continue;
     const prod=productos.find(x=>x.id===a.pid);if(!prod)continue;
@@ -2668,6 +2802,7 @@ async function cambiarEstado(id,newE){
   }
   showToast('✅ Estado actualizado a: '+newE);
   renderPedidosList();
+  if(typeof renderLeads==='function')renderLeads();
 }
 async function delPedido(id){
   if(!confirm('¿Eliminar pedido?'))return;
@@ -2675,8 +2810,9 @@ async function delPedido(id){
   if(!p){showToast('⚠️ Pedido no encontrado');return;}
   const fbKey=p._fbKey||p.id;
   if(!fbKey){showToast('⚠️ No se pudo identificar el pedido en Firebase');return;}
-  // Devolver stock solo si tiene artículos reconocidos y no está rechazado
-  if(p.estado!=='rechazado'){
+  // Devolver stock solo si este pedido lo tenía descontado
+  if(stockYaDescontado(p))await ajustarStock(p.arts||[],+1);
+  if(false){
     for(const a of(p.arts||[])){
       if(!a.pid)continue;
       const prod=productos.find(x=>x.id===a.pid);if(!prod)continue;
@@ -2698,13 +2834,116 @@ async function delPedido(id){
   }
 }
 
+
+// ── LEADS ────────────────────────────────────────────────────────────────────
+let ldVista='pendientes';
+function ldKey(p){return p._fbKey||p.id;}
+function ldHora(p){
+  const iso=p.creadoEn||'';
+  if(!iso)return '';
+  try{return new Date(iso).toLocaleTimeString('es-PY',{hour:'2-digit',minute:'2-digit',timeZone:'America/Asuncion'});}catch(e){return '';}
+}
+function ldFechaCorta(f){if(!f)return '-';const[y,m,d]=f.split('-');return d+'/'+m;}
+function actualizarBadgeLeads(){
+  const b=document.getElementById('nav-leads-badge');if(!b)return;
+  const n=pedidos.filter(p=>p.estado==='tomado').length;
+  b.style.display=n?'inline-block':'none';b.textContent=n;
+}
+function setLdVista(v){ldVista=v;renderLeads();}
+function renderLeads(){
+  const fEl=document.getElementById('ld-fecha');if(!fEl)return;
+  if(!fEl.value)fEl.value=today();
+  const f=fEl.value;
+  actualizarBadgeLeads();
+  const pend=pedidos.filter(p=>p.estado==='tomado');
+  const entregasDia=pedidos.filter(p=>esVenta(p)&&(p.fechaEntrega||p.fecha)===f);
+  const conf=entregasDia;
+  const canc=pedidos.filter(p=>p.estado==='rechazado'&&(p.fecha===f||p.fechaResolucion===f));
+  const todos=pedidos.filter(p=>p.fecha===f);
+  const pills=[['pendientes','🟡 Pendientes',pend.length],['confirmados','✅ Confirmados',conf.length],['cancelados','❌ Cancelados',canc.length],['todos','📋 Entraron este día',todos.length]];
+  document.getElementById('ld-pills').innerHTML=pills.map(([k,t,n])=>`<button class="ld-pill ${ldVista===k?'active':''}" onclick="setLdVista('${k}')">${t}<span class="ld-n">${n}</span></button>`).join('');
+  // Resumen por delivery (entregas del día seleccionado)
+  const cajas=[...LD_DELIVERIES,'sin'];
+  document.getElementById('ld-dels').innerHTML=cajas.map(k=>{
+    const lista=k==='sin'?entregasDia.filter(p=>!p.delivery):entregasDia.filter(p=>p.delivery===k||(k==='facu'&&p.delivery==='alterno'));
+    const m=lista.filter(p=>p.turno==='manana').length,t=lista.filter(p=>p.turno==='tarde').length;
+    const nom=k==='sin'?'Sin asignar':KB_DELIVERIES[k].emoji+' '+KB_DELIVERIES[k].nombre;
+    return `<div class="ld-del ${ldVista==='del:'+k?'active':''}" onclick="setLdVista('del:${k}')"><div class="ld-del-name">${nom}</div><div class="ld-del-n">${lista.length}</div><div class="ld-del-mt">☀️ ${m} · 🌙 ${t}</div></div>`;
+  }).join('');
+  let lista=[],titulo='';
+  if(ldVista==='pendientes'){lista=pend;titulo='Pendientes de confirmar (todas las fechas)';}
+  else if(ldVista==='confirmados'){lista=conf;titulo='Confirmados para entregar el '+ldFechaCorta(f);}
+  else if(ldVista==='cancelados'){lista=canc;titulo='Cancelados del '+ldFechaCorta(f);}
+  else if(ldVista==='todos'){lista=todos;titulo='Todos los que entraron el '+ldFechaCorta(f);}
+  else if(ldVista.startsWith('del:')){
+    const k=ldVista.slice(4);
+    lista=k==='sin'?entregasDia.filter(p=>!p.delivery):entregasDia.filter(p=>p.delivery===k||(k==='facu'&&p.delivery==='alterno'));
+    const nom=k==='sin'?'sin delivery asignado':KB_DELIVERIES[k].nombre;
+    titulo=`Entregas del ${ldFechaCorta(f)} — ${nom} (☀️ mañana primero)`;
+    const ord={manana:0,tarde:1};
+    lista=[...lista].sort((a,b)=>(ord[a.turno]??2)-(ord[b.turno]??2));
+  }
+  if(!ldVista.startsWith('del:'))lista=[...lista].sort((a,b)=>((b.fecha||'')+(b.creadoEn||'')+String(b.numero||'').padStart(6,'0')).localeCompare((a.fecha||'')+(a.creadoEn||'')+String(a.numero||'').padStart(6,'0')));
+  const tot=lista.reduce((s,p)=>s+(p.montoFinal||0),0);
+  document.getElementById('ld-titulo').textContent=`${titulo} · ${lista.length} pedido${lista.length===1?'':'s'} · ${fmt(tot)}`;
+  document.getElementById('ld-list').innerHTML=lista.length?lista.map(ldCard).join(''):'<div class="empty">No hay pedidos acá</div>';
+}
+function ldCard(p){
+  const k=ldKey(p);
+  const est=p.estado;
+  const cls=est==='confirmado'?'ld-conf':est==='entregado'?'ld-ent':est==='rechazado'?'ld-canc':'ld-tom';
+  const badge={tomado:['badge-yellow','🟡 Pendiente'],confirmado:['badge-blue','✅ Confirmado'],entregado:['badge-green','📦 Entregado'],rechazado:['badge-red','❌ Cancelado']}[est]||['badge-yellow',est];
+  const hora=ldHora(p);
+  const orig=p.origen==='shopify'?'🛍️ Shopify':'✍️ Manual';
+  const rep=p.reprogramado&&est!=='entregado'&&est!=='rechazado'?' · <b style="color:var(--yellow)">📅 Reprogramado</b>':'';
+  const tel=(p.telefono||'').replace(/'/g,'');
+  const delBtns=LD_DELIVERIES.map(d=>`<button class="ld-b ${p.delivery===d||(d==='facu'&&p.delivery==='alterno')?'on':''}" onclick="ldDelivery('${k}','${d}')">${KB_DELIVERIES[d].nombre}</button>`).join('');
+  return `<div class="ld-card ${cls}">
+    <div class="ld-top"><span class="ld-num">#${p.numero||'-'}${hora?' · '+hora:''} · ${ldFechaCorta(p.fecha)} · ${orig}</span><span class="badge ${badge[0]}">${badge[1]}</span></div>
+    <div class="ld-cli">${p.cliente||'Sin nombre'}</div>
+    <div class="ld-sub">📍 ${p.ciudad||'-'}${p.nota?' · '+p.nota:''}</div>
+    <div class="ld-res">${p.resumen||''}</div>
+    <div class="ld-top"><span class="ld-monto">${fmt(p.montoFinal||0)}</span><span class="ld-sub">🚚 Entrega ${ldFechaCorta(p.fechaEntrega||p.fecha)}${rep}</span></div>
+    <div class="ld-row">
+      <button class="ld-b b-conf ${est==='confirmado'||est==='entregado'?'on':''}" onclick="ldEstado('${k}','confirmado')">✅ Confirmar</button>
+      <button class="ld-b b-canc ${est==='rechazado'?'on':''}" onclick="ldEstado('${k}','rechazado')">❌ Cancelar</button>
+      <button class="ld-b" onclick="abrirReprogramar('${k}')">📅 Reprogramar</button>
+    </div>
+    <div class="ld-row"><div class="ld-lbl">Delivery</div>${delBtns}</div>
+    <div class="ld-row"><div class="ld-lbl">Turno</div>
+      <button class="ld-b ${p.turno==='manana'?'on':''}" onclick="ldTurno('${k}','manana')">☀️ Mañana</button>
+      <button class="ld-b ${p.turno==='tarde'?'on':''}" onclick="ldTurno('${k}','tarde')">🌙 Tarde</button>
+      <button class="ld-b b-wa" onclick="contactarClienteWA('${tel}')">💬 WhatsApp</button>
+    </div>
+  </div>`;
+}
+async function ldEstado(k,newE){
+  const p=pedidos.find(x=>ldKey(x)===k);if(!p)return;
+  if(newE==='rechazado'&&p.estado!=='rechazado'&&!confirm(`¿Cancelar el pedido #${p.numero||''} de ${p.cliente||''}?`))return;
+  if(p.estado===newE&&!p.reprogramado){showToast('ℹ️ Ya está '+(newE==='rechazado'?'cancelado':'confirmado'));return;}
+  await cambiarEstado(k,newE);
+}
+async function ldDelivery(k,d){
+  const p=pedidos.find(x=>ldKey(x)===k);if(!p)return;
+  const nuevo=p.delivery===d?null:d;
+  await fbSet('pedidos/'+k+'/delivery',nuevo);
+  showToast(nuevo?'🚚 Asignado a '+KB_DELIVERIES[d].nombre:'Delivery quitado');
+}
+async function ldTurno(k,t){
+  const p=pedidos.find(x=>ldKey(x)===k);if(!p)return;
+  const nuevo=p.turno===t?null:t;
+  await fbSet('pedidos/'+k+'/turno',nuevo);
+}
 // CLIENTES
 // ── TABLERO KANBAN (Pedidos y Envíos) ─────────────────────────────────────────
 const KB_DELIVERIES={
-  dam:{nombre:'DAM Logística',emoji:'🚚',clase:'kb-tag-dam',color:'blue'},
-  alterno:{nombre:'Delivery Alterno',emoji:'🚛',clase:'kb-tag-alterno',color:'orange'},
-  facu:{nombre:'Envío Facu',emoji:'🚶',clase:'kb-tag-facu',color:'purple'}
+  tobi:{nombre:'Tobi',emoji:'🛵',clase:'kb-tag-alterno',color:'orange'},
+  dam:{nombre:'DAM',emoji:'🚚',clase:'kb-tag-dam',color:'blue'},
+  tsi:{nombre:'TSI',emoji:'📦',clase:'kb-tag-dam',color:'blue'},
+  facu:{nombre:'Propio',emoji:'🚶',clase:'kb-tag-facu',color:'purple'},
+  alterno:{nombre:'Ozuna',emoji:'🚛',clase:'kb-tag-alterno',color:'orange'}
 };
+const LD_DELIVERIES=['tobi','dam','tsi','facu'];
 function renderKanban(){
   const fechaEl=document.getElementById('kb-fecha');
   if(!fechaEl)return;
@@ -2715,9 +2954,10 @@ function renderKanban(){
   const cols=[
     {key:'ingresado',titulo:'📥 Ingresado',sub:'Recién tomado, falta confirmar',filtro:p=>p.estado==='tomado'},
     {key:'confirmado',titulo:'✅ Confirmado',sub:'Falta asignar delivery',filtro:p=>p.estado==='confirmado'&&!p.delivery},
-    {key:'dam',titulo:'🚚 DAM Logística',sub:'En reparto',filtro:p=>p.estado==='confirmado'&&p.delivery==='dam'},
-    {key:'alterno',titulo:'🚛 Delivery Alterno',sub:'En reparto',filtro:p=>p.estado==='confirmado'&&p.delivery==='alterno'},
-    {key:'facu',titulo:'🚶 Envío Facu',sub:'Lo entregás vos',filtro:p=>p.estado==='confirmado'&&p.delivery==='facu'},
+    {key:'tobi',titulo:'🛵 Tobi',sub:'En reparto',filtro:p=>p.estado==='confirmado'&&p.delivery==='tobi'},
+    {key:'dam',titulo:'🚚 DAM',sub:'En reparto',filtro:p=>p.estado==='confirmado'&&p.delivery==='dam'},
+    {key:'tsi',titulo:'📦 TSI',sub:'En reparto',filtro:p=>p.estado==='confirmado'&&p.delivery==='tsi'},
+    {key:'facu',titulo:'🚶 Propio',sub:'Lo entregás vos',filtro:p=>p.estado==='confirmado'&&(p.delivery==='facu'||p.delivery==='alterno')},
     {key:'entregado',titulo:'✅ Entregado',sub:'Resuelto',filtro:p=>p.estado==='entregado'},
     {key:'rechazado',titulo:'❌ Rechazado',sub:'Resuelto',filtro:p=>p.estado==='rechazado'}
   ];
@@ -2797,7 +3037,7 @@ function abrirDetallePedido(id){
   const p=pedidos.find(x=>(x.id||x._fbKey)===id);
   if(!p)return;
   const labels={tomado:'📥 Ingresado',confirmado:'✅ Confirmado',entregado:'✅ Entregado',rechazado:'❌ Rechazado'};
-  const deliveryNombres={dam:'🚚 DAM Logística',alterno:'🚛 Delivery Alterno',facu:'🚶 Envío Facu'};
+  const deliveryNombres={tobi:'🛵 Tobi',dam:'🚚 DAM',tsi:'📦 TSI',facu:'🚶 Propio',alterno:'🚛 Ozuna'};
   const rep=p.reprogramado&&p.estado!=='entregado'&&p.estado!=='rechazado';
   const items=(p.arts||[]).map(a=>`
     <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">
