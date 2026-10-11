@@ -382,6 +382,20 @@ select option{background:var(--surface)}
   <div class="mb-card" style="cursor:pointer" onclick="irADashEntregarHoy()">
     <div class="mb-row"><div class="mb-label" style="margin:0">🚚 A entregar hoy</div><div style="font-size:20px;font-weight:800;color:var(--green2)" id="dash-entregar-hoy">0</div></div>
   </div>
+  <div class="mb-card" id="ads-box">
+    <div class="mb-row" style="margin-bottom:8px"><div class="mb-label" style="margin:0">📣 Publicidad Meta (real)</div><div class="mb-sub" id="ads-upd" style="margin:0"></div></div>
+    <div class="ld-kpis" style="margin:0">
+      <div><div class="mb-sub">Gasto hoy</div><div class="mb-value mb-value-sm" id="ads-hoy">-</div></div>
+      <div><div class="mb-sub">Costo por venta hoy</div><div class="mb-value mb-value-sm" id="cpv-hoy">-</div></div>
+      <div><div class="mb-sub">Gasto del mes</div><div class="mb-value mb-value-sm" id="ads-mes">-</div></div>
+      <div><div class="mb-sub">Costo por venta del mes</div><div class="mb-value mb-value-sm" id="cpv-mes">-</div></div>
+    </div>
+    <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
+      <div class="mb-sub">💰 Ganancia neta real del mes</div>
+      <div class="mb-value" id="neta-mes">-</div>
+      <div class="mb-sub">Ventas confirmadas − mercadería − envío ₲25.000 c/u − publicidad real de Meta</div>
+    </div>
+  </div>
 
 
   <div class="mb-pills">
@@ -441,7 +455,7 @@ select option{background:var(--surface)}
     <div class="mb-icon mb-icon-green"><svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="width:19px;height:19px"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></div>
     <div class="mb-label">Ganancia Bruta</div>
     <div class="mb-value" id="d-ganancia">₲ 0</div>
-    <div class="mb-sub">Facturación − Costo Mercadería − ₲30.000 publicidad − ₲25.000 envío, por pedido</div>
+    <div class="mb-sub" id="d-ganancia-sub">Facturación − Costo Mercadería − publicidad − ₲25.000 envío por pedido</div>
   </div>
 
 
@@ -1151,6 +1165,8 @@ db.ref('pedidos').on('value',s=>{
   onData('pedidos');
 });
 db.ref('movimientos').on('value',s=>{movimientos=s.val()?Object.values(s.val()):[];onData('movimientos');});
+let gastoAds={};
+db.ref('gastoAds').on('value',s=>{gastoAds=s.val()||{};onData('gastoAds');});
 let cierres=[];
 db.ref('cierres').on('value',s=>{cierres=s.val()?Object.values(s.val()):[];onData('cierres');});
 
@@ -1501,11 +1517,35 @@ function renderDashboard(){
   if(elAlerta&&sinProducto.length)elAlerta.textContent=`⚠️ ${sinProducto.length} pedido(s) sin producto reconocido (no suman al costo): ${sinProducto.map(p=>`#${p.numero||'?'} ${p.cliente||''}`).join(', ')}`;
 
   const facturacionEstimada=pPeriod.reduce((s,p)=>s+(p.montoFinal||0),0);
-  const gananciaBruta=facturacionEstimada-costoMercaderia-(30000+25000)*cantPedidos;
+  // Publicidad: si hay gasto real de Meta para el período se usa ese; si no, ₲30.000 por pedido como antes
+  const adsDia=d=>(gastoAds&&gastoAds[d]&&Number(gastoAds[d].spend))||0;
+  const diasAds=Object.keys(gastoAds||{}).filter(inRange);
+  const adsPeriodo=diasAds.reduce((s,d)=>s+adsDia(d),0);
+  const gananciaBruta=facturacionEstimada-costoMercaderia-25000*cantPedidos-(diasAds.length?adsPeriodo:30000*cantPedidos);
+  const gSub=document.getElementById('d-ganancia-sub');
+  if(gSub)gSub.textContent=diasAds.length?`Facturación − mercadería − ₲25.000 envío por pedido − publicidad real (${fmt(adsPeriodo)})`:'Facturación − mercadería − ₲25.000 envío − ₲30.000 publicidad por pedido (estimado)';
 
   // Total facturado en el mes (fijo, no depende del filtro de período de arriba)
   const mesActual=today().slice(0,7);
   const facturadoMes=pedidos.filter(p=>esVenta(p)&&(fechaVenta(p)||'').startsWith(mesActual)).reduce((s,p)=>s+(p.montoFinal||0),0);
+  // Publicidad real y ganancia neta del mes
+  {
+    const costoPedido=p=>(p.arts||[]).reduce((ss,a)=>{const cu=a.costo!=null?a.costo:(()=>{const pr=productos.find(x=>x.id===a.pid);return pr?pr.costo||0:0;})();return ss+cu*(a.cant||1);},0);
+    const ventasMesArr=pedidos.filter(p=>esVenta(p)&&(fechaVenta(p)||'').startsWith(mesActual));
+    const adsHoy=adsDia(hoyStr);
+    const adsMes=Object.keys(gastoAds||{}).filter(d=>d.startsWith(mesActual)).reduce((s,d)=>s+adsDia(d),0);
+    const hayAds=Object.keys(gastoAds||{}).length>0;
+    const netaMes=facturadoMes-ventasMesArr.reduce((s,p)=>s+costoPedido(p),0)-25000*ventasMesArr.length-adsMes;
+    const st=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+    st('ads-hoy',hayAds?fmt(adsHoy):'Sin datos');
+    st('ads-mes',hayAds?fmt(adsMes):'Sin datos');
+    st('cpv-hoy',hayAds?(ventasHoyArr.length?fmt(adsHoy/ventasHoyArr.length):'Sin ventas'):'-');
+    st('cpv-mes',hayAds?(ventasMesArr.length?fmt(adsMes/ventasMesArr.length):'Sin ventas'):'-');
+    st('neta-mes',hayAds?fmt(netaMes):'Esperando datos de Meta');
+    const ne=document.getElementById('neta-mes');if(ne)ne.style.color=hayAds?(netaMes>=0?'var(--green2)':'var(--red)'):'';
+    const upd=gastoAds&&gastoAds[hoyStr]&&gastoAds[hoyStr].actualizado;
+    st('ads-upd',upd?('act. '+new Date(upd).toLocaleTimeString('es-PY',{hour:'2-digit',minute:'2-digit',timeZone:'America/Asuncion'})):'');
+  }
 
   document.getElementById('d-pedidos').textContent=cantPedidos;
   document.getElementById('d-unidades-card').textContent=cantUnidades;
@@ -2868,7 +2908,7 @@ function renderLeads(){
     const lista=k==='sin'?entregasDia.filter(p=>!p.delivery):entregasDia.filter(p=>p.delivery===k||(k==='facu'&&p.delivery==='alterno'));
     const m=lista.filter(p=>p.turno==='manana').length,t=lista.filter(p=>p.turno==='tarde').length;
     const nom=k==='sin'?'Sin asignar':KB_DELIVERIES[k].emoji+' '+KB_DELIVERIES[k].nombre;
-    return `<div class="ld-del ${ldVista==='del:'+k?'active':''}" onclick="setLdVista('del:${k}')"><div class="ld-del-name">${nom}</div><div class="ld-del-n">${lista.length}</div><div class="ld-del-mt">☀️ ${m} · 🌙 ${t}</div></div>`;
+    return `<div class="ld-del ${ldVista==='del:'+k?'active':''}" onclick="setLdVista('del:${k}')"><div class="ld-del-name">${nom}</div><div class="ld-del-n">${lista.length}</div><div class="ld-del-mt">Mañana ${m} · Tarde ${t}</div></div>`;
   }).join('');
   let lista=[],titulo='';
   if(ldVista==='pendientes'){lista=pend;titulo='Pendientes de confirmar (todas las fechas)';}
@@ -2879,7 +2919,7 @@ function renderLeads(){
     const k=ldVista.slice(4);
     lista=k==='sin'?entregasDia.filter(p=>!p.delivery):entregasDia.filter(p=>p.delivery===k||(k==='facu'&&p.delivery==='alterno'));
     const nom=k==='sin'?'sin delivery asignado':KB_DELIVERIES[k].nombre;
-    titulo=`Entregas del ${ldFechaCorta(f)} — ${nom} (☀️ mañana primero)`;
+    titulo=`Entregas del ${ldFechaCorta(f)} — ${nom} (primero los de mañana)`;
     const ord={manana:0,tarde:1};
     lista=[...lista].sort((a,b)=>(ord[a.turno]??2)-(ord[b.turno]??2));
   }
@@ -2911,8 +2951,8 @@ function ldCard(p){
     </div>
     <div class="ld-row"><div class="ld-lbl">Delivery</div>${delBtns}</div>
     <div class="ld-row"><div class="ld-lbl">Turno</div>
-      <button class="ld-b ${p.turno==='manana'?'on':''}" onclick="ldTurno('${k}','manana')">☀️ Mañana</button>
-      <button class="ld-b ${p.turno==='tarde'?'on':''}" onclick="ldTurno('${k}','tarde')">🌙 Tarde</button>
+      <button class="ld-b ${p.turno==='manana'?'on':''}" onclick="ldTurno('${k}','manana')">De mañana</button>
+      <button class="ld-b ${p.turno==='tarde'?'on':''}" onclick="ldTurno('${k}','tarde')">De tarde</button>
       <button class="ld-b b-wa" onclick="contactarClienteWA('${tel}')">💬 WhatsApp</button>
     </div>
   </div>`;
