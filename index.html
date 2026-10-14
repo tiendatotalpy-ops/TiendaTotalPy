@@ -542,6 +542,9 @@ body:not(.theme-light) .kb-col{background:var(--surface);border:1px solid var(--
 .divider{background:var(--border)}
 .sync-dot.ok{box-shadow:none}
 
+/* Títulos de cada ítem en verde de marca */
+.card-title,.mb-label,.saldo-label,.total-label,.section-title,.mb-sec-title{color:#75EF4B!important;font-weight:600!important}
+.theme-light .card-title,.theme-light .mb-label,.theme-light .saldo-label,.theme-light .total-label,.theme-light .section-title,.theme-light .mb-sec-title{color:#3DA81F!important}
 </style>
 </head>
 <body>
@@ -1357,12 +1360,13 @@ function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2
 function fechaPY(d){return d.toLocaleDateString('en-CA',{timeZone:'America/Asuncion'});}
 function today(){return fechaPY(new Date());}
 function addDays(dateStr,n){const d=new Date(dateStr+'T00:00:00');d.setDate(d.getDate()+n);return fechaPY(d);}
-// Regla de corte: pedidos tomados antes de la 13:00 se entregan ese mismo día; después, al día siguiente.
+// Regla de corte: se entrega el mismo día mientras el delivery está trabajando (hasta las 19hs); después, al día siguiente.
+const HORA_CORTE_ENTREGA=19;
 function esDomingo(dateStr){return new Date(dateStr+'T00:00:00').getDay()===0;}
 function calcFechaEntrega(fechaBase){
   const horaPY=new Date().toLocaleString('en-US',{timeZone:'America/Asuncion',hour:'2-digit',hour12:false});
   const hora=parseInt(horaPY,10);
-  let fe=hora<13?fechaBase:addDays(fechaBase,1);
+  let fe=hora<HORA_CORTE_ENTREGA?fechaBase:addDays(fechaBase,1);
   if(esDomingo(fe))fe=addDays(fe,1); // el delivery no trabaja domingo, pasa directo al lunes
   return fe;
 }
@@ -2384,7 +2388,7 @@ function setFiltroFecha(t){
 }
 function renderContadorHoy(){
   const hoy=today();
-  // Respeta el corte de la 1pm: fechaEntrega ya viene calculada con esa regla
+  // Respeta el corte de entrega (HORA_CORTE_ENTREGA): fechaEntrega ya viene calculada con esa regla
   // desde calcFechaEntrega() al cargar o editar el pedido.
   const hoyList=pedidos.filter(p=>!p.interior&&(p.fechaEntrega||p.fecha)===hoy&&p.estado!=='rechazado');
   const cantPedidos=hoyList.length;
@@ -2522,7 +2526,7 @@ function generarMensajeDelivery(id){
   const texto=`📦 Pedido #${p.numero||''}
 
 👤 ${p.cliente||''}
-
+${p.turno==='manana'?'\n🌅 Turno: MAÑANA':p.turno==='tarde'?'\n🌇 Turno: TARDE':''}
 ${items}
 
 💰 Total: Gs. ${(p.montoFinal||0).toLocaleString('es-PY')}
@@ -2953,7 +2957,7 @@ async function repararFechasEntregaCorruptas(){
   for(const p of conCreadoEn){
     const fbKey=p._fbKey||p.id;
     const horaCreacion=parseInt(new Date(p.creadoEn).toLocaleString('en-US',{timeZone:'America/Asuncion',hour:'2-digit',hour12:false}),10);
-    let feCorrecta=horaCreacion<13?p.fecha:addDays(p.fecha,1);
+    let feCorrecta=horaCreacion<HORA_CORTE_ENTREGA?p.fecha:addDays(p.fecha,1);
     if(esDomingo(feCorrecta))feCorrecta=addDays(feCorrecta,1);
     if(feCorrecta!==p.fechaEntrega){
       await fbSet('pedidos/'+fbKey+'/fechaEntrega',feCorrecta);
