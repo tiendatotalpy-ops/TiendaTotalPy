@@ -1540,7 +1540,7 @@ async function enviarCompraMeta(p){
     const r=await fetch(META_PURCHASE_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
       telefono:p.telefono||'',monto:p.montoFinal||0,numero:p.numero||fk,
       fbc:p.fbc||'',fbp:p.fbp||'',clientIp:p.clientIp||'',userAgent:p.clientUserAgent||'',
-      fechaPedido:p.creadoEn||''
+      fechaPedido:p.creadoEn||'',cliente:p.cliente||'',ciudad:p.ciudad||''
     })});
     if(r.ok){await fbSet('pedidos/'+fk+'/metaEnviado',new Date().toISOString());p.metaEnviado=true;}
     else console.warn('Meta purchase error',r.status,await r.text());
