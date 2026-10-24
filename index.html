@@ -1531,6 +1531,21 @@ function onData(src){
 }
 
 async function fbSet(path,val){try{await db.ref(path).set(val);setSyncStatus(true);}catch{setSyncStatus(false);}}
+// ── Meta: la venta se cuenta recién cuando el pedido se CONFIRMA (no al tocar "Comprar") ──
+const META_PURCHASE_URL='https://webhookshopify.netlify.app/.netlify/functions/meta-purchase';
+async function enviarCompraMeta(p){
+  try{
+    if(!p||p.metaEnviado)return;
+    const fk=p._fbKey||p.id;
+    const r=await fetch(META_PURCHASE_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      telefono:p.telefono||'',monto:p.montoFinal||0,numero:p.numero||fk,
+      fbc:p.fbc||'',fbp:p.fbp||'',clientIp:p.clientIp||'',userAgent:p.clientUserAgent||'',
+      fechaPedido:p.creadoEn||''
+    })});
+    if(r.ok){await fbSet('pedidos/'+fk+'/metaEnviado',new Date().toISOString());p.metaEnviado=true;}
+    else console.warn('Meta purchase error',r.status,await r.text());
+  }catch(e){console.warn('Meta purchase fallo',e);}
+}
 async function fbPush(path,val){const id=uid();val.id=id;try{await db.ref(path+'/'+id).set(val);setSyncStatus(true);return id;}catch{setSyncStatus(false);}}
 
 // Contador atómico para el número de pedido: usa una transacción de Firebase para que,
@@ -3022,6 +3037,7 @@ async function confirmarReprogramar(){
   if(!p.fechaConfirmado)await fbSet('pedidos/'+fk+'/fechaConfirmado',today());
   await fbSet('pedidos/'+fk+'/estado','confirmado');
   await fbSet('pedidos/'+fk+'/reprogramado',true);
+  enviarCompraMeta(p);
   await fbSet('pedidos/'+fk+'/fechaEntrega',nuevaFecha);
   showToast('Reprogramado para '+nuevaFecha);
   cerrarReprogramar();
@@ -3062,6 +3078,7 @@ async function cambiarEstado(id,newE){
   }
   await fbSet('pedidos/'+id+'/estado',newE);
   await fbSet('pedidos/'+id+'/reprogramado',false);
+  if(newE==='confirmado'||newE==='entregado')enviarCompraMeta(p);
   if(newE==='confirmado'){
     // Notificar al delivery que tiene un pedido nuevo confirmado
     const nid=uid();
