@@ -800,14 +800,21 @@ body:not(.theme-light) .kb-col{background:var(--surface);border:1px solid var(--
 <!-- ═══════════════════════════════════════════════════════ PEDIDOS -->
 <div class="page" id="page-pedidos">
   <div class="inner-tabs">
-    <button class="inner-tab active" onclick="switchTab('pedidos','nuevo')">+ Nuevo</button>
+    <button class="inner-tab active" onclick="switchTab('pedidos','delivery')">Por delivery</button>
+    <button class="inner-tab" onclick="switchTab('pedidos','nuevo')">+ Nuevo</button>
     <button class="inner-tab" onclick="switchTab('pedidos','lista')">Historial</button>
     <button class="inner-tab" onclick="switchTab('pedidos','entregas')">Entregas</button>
     <button class="inner-tab" onclick="switchTab('pedidos','kanban')">Tablero</button>
     <button class="inner-tab" onclick="switchTab('pedidos','clientes')">Clientes</button>
   </div>
 
-  <div id="pedidos-nuevo">
+  <div id="pedidos-delivery">
+    <div class="date-selector" style="margin-bottom:10px"><input type="date" id="pd-fecha" onchange="renderPorDelivery()"></div>
+    <div id="pd-resumen"></div>
+    <div id="pd-grupos"><div class="loading">Cargando...</div></div>
+  </div>
+
+  <div id="pedidos-nuevo" style="display:none">
     <div class="form-group">
       <label class="form-label">Pegar mensaje de pedido (Shopify/WhatsApp)</label>
       <textarea id="p-pegado" placeholder="Pegá aquí el mensaje completo del pedido..." style="min-height:90px;resize:vertical"></textarea>
@@ -1340,6 +1347,18 @@ body:not(.theme-light) .kb-col{background:var(--surface);border:1px solid var(--
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-ld-edit">
+  <div class="modal-box">
+    <div class="modal-title" id="ld-edit-titulo">Editar pedido</div>
+    <div class="form-group"><label class="form-label">Cliente</label><input type="text" id="ld-edit-cliente"></div>
+    <div class="form-group"><label class="form-label">Teléfono</label><input type="tel" id="ld-edit-telefono"></div>
+    <div class="form-group"><label class="form-label">Ciudad</label><input type="text" id="ld-edit-ciudad"></div>
+    <div class="form-group"><label class="form-label">Dirección / ubicación (pegá el link de Maps o la dirección)</label><textarea id="ld-edit-ubicacion" style="min-height:70px;resize:vertical" placeholder="https://maps.app.goo.gl/... o calle y número"></textarea></div>
+    <div class="form-group"><label class="form-label">Nota / referencia</label><textarea id="ld-edit-nota" style="min-height:60px;resize:vertical"></textarea></div>
+    <button class="btn btn-green" onclick="guardarLdEdit()">Guardar</button>
+    <button class="btn btn-outline" onclick="closeModal('modal-ld-edit')">Cancelar</button>
+  </div>
+</div>
 <div class="modal-overlay" id="modal-msg-delivery">
   <div class="modal-box">
     <div class="modal-title">Mensaje para el delivery</div>
@@ -1527,7 +1546,7 @@ function onData(src){
     const skuTab=document.getElementById('productos-skus');
     if(skuTab&&skuTab.style.display!=='none')renderSkuMasivo();
   }
-  if(id==='pedidos'&&src==='pedidos'){renderPedidosList();renderEntregas();renderKanban();renderClientes();}
+  if(id==='pedidos'&&src==='pedidos'){renderPorDelivery();renderPedidosList();renderEntregas();renderKanban();renderClientes();}
 }
 
 async function fbSet(path,val){try{await db.ref(path).set(val);setSyncStatus(true);}catch{setSyncStatus(false);}}
@@ -1618,7 +1637,7 @@ function showPage(name){
   });
   if(name==='dashboard')renderDashboard();
   if(name==='leads'){const lf=document.getElementById('ld-fecha');if(lf&&!lf.value)lf.value=today();renderLeads();}
-  if(name==='pedidos'){arts=[];renderArts();document.getElementById('p-fecha').value=today();switchTab('pedidos','lista');}
+  if(name==='pedidos'){arts=[];renderArts();document.getElementById('p-fecha').value=today();switchTab('pedidos','delivery');}
   if(name==='caja'){renderCajaSaldo();}
   if(name==='productos'){renderProdList();fillStockSel();fillCompraSel();}
   if(name==='config'){const m=document.getElementById('cfg-meta');if(m)m.value=metaMes||'';renderPaletaSwatches();}
@@ -1645,12 +1664,13 @@ function showPageSilent(name){
 
 function switchTab(page,tab){
   const panels={
-    pedidos:['nuevo','lista','entregas','kanban','clientes'],
+    pedidos:['delivery','nuevo','lista','entregas','kanban','clientes'],
     caja:['dia','cierres','reporte','rubros'],
     productos:['catalogo','pedidoprov','valor']
   };
   document.querySelectorAll(`#page-${page} .inner-tabs .inner-tab`).forEach((t,i)=>t.classList.toggle('active',panels[page][i]===tab));
   panels[page].forEach(p=>{const el=document.getElementById(`${page}-${p}`);if(el)el.style.display=p===tab?'block':'none';});
+  if(page==='pedidos'&&tab==='delivery'){const pf=document.getElementById('pd-fecha');if(pf&&!pf.value)pf.value=today();renderPorDelivery();}
   if(page==='pedidos'&&tab==='lista'){document.getElementById('p-filtro').value=today();renderPedidosList();}
   if(page==='pedidos'&&tab==='entregas'){const ef=document.getElementById('entregas-fecha');if(ef&&!ef.value)ef.value=today();renderEntregas();}
   if(page==='pedidos'&&tab==='kanban'){const kf=document.getElementById('kb-fecha');if(kf&&!kf.value)kf.value=today();renderKanban();}
@@ -2545,7 +2565,12 @@ function contactarClienteWA(tel){
   }
 }
 function generarMensajeDelivery(id){
-  const p=pedidos.find(x=>x.id===id);if(!p)return;
+  const p=pedidos.find(x=>x.id===id||x._fbKey===id);if(!p)return;
+  document.getElementById('msg-delivery-texto').value=textoMensajeDelivery(p);
+  window._msgDeliveryTel=p.telefono||'';
+  openModal('modal-msg-delivery');
+}
+function textoMensajeDelivery(p){
   const items=(p.arts||[]).map(a=>`${a.cant} ${a.nombre}${a.vnom?' - '+a.vnom:''}`).join('\n');
   // Si ya es un link (formato lat,lng generado por geolocalización), se usa tal cual.
   // Si es un Plus Code o dirección en texto, se convierte en link de Google Maps clickeable.
@@ -2572,9 +2597,7 @@ ${p.nota?`\n📝 ${p.nota}`:''}
 ${p.ciudad||'(sin especificar)'}
 
 📞 Teléfono de contacto: ${p.telefono||'(sin especificar)'}`;
-  document.getElementById('msg-delivery-texto').value=texto;
-  window._msgDeliveryTel=p.telefono||'';
-  openModal('modal-msg-delivery');
+  return texto;
 }
 function copiarMensajeDelivery(){
   const txt=document.getElementById('msg-delivery-texto').value;
@@ -3194,12 +3217,14 @@ function ldCard(p){
     <div class="ld-top"><span class="ld-num">#${p.numero||'-'}${hora?' · '+hora:''} · ${ldFechaCorta(p.fecha)} · ${orig}</span><span class="badge ${badge[0]}">${badge[1]}</span></div>
     <div class="ld-cli">${p.cliente||'Sin nombre'}</div>
     <div class="ld-sub">${p.ciudad||'-'}${p.nota?' · '+p.nota:''}</div>
+    ${p.ubicacion?`<div class="ld-sub">📍 ${p.ubicacion}</div>`:''}
     <div class="ld-res">${p.resumen||''}</div>
     <div class="ld-top"><span class="ld-monto">${fmt(p.montoFinal||0)}</span><span class="ld-sub">Entrega ${ldFechaCorta(p.fechaEntrega||p.fecha)}${rep}</span></div>
     <div class="ld-row">
       <button class="ld-b b-conf ${est==='confirmado'||est==='entregado'?'on':''}" onclick="ldEstado('${k}','confirmado')">Confirmar</button>
       <button class="ld-b b-canc ${est==='rechazado'?'on':''}" onclick="ldEstado('${k}','rechazado')">Cancelar</button>
       <button class="ld-b" onclick="abrirReprogramar('${k}')">Reprogramar</button>
+      <button class="ld-b" onclick="ldEditar('${k}')">Editar</button>
     </div>
     <div class="ld-row"><div class="ld-lbl">Delivery</div>${delBtns}</div>
     <div class="ld-row"><div class="ld-lbl">Turno</div>
@@ -3225,6 +3250,93 @@ async function ldTurno(k,t){
   const p=pedidos.find(x=>ldKey(x)===k);if(!p)return;
   const nuevo=p.turno===t?null:t;
   await fbSet('pedidos/'+k+'/turno',nuevo);
+}
+// ── Edición rápida desde Leads (cliente, teléfono, ciudad, dirección, nota) ──
+let _ldEditKey=null;
+function ldEditar(k){
+  const p=pedidos.find(x=>ldKey(x)===k);if(!p)return;
+  _ldEditKey=k;
+  document.getElementById('ld-edit-titulo').textContent=`Editar pedido #${p.numero||''}`;
+  document.getElementById('ld-edit-cliente').value=p.cliente||'';
+  document.getElementById('ld-edit-telefono').value=p.telefono||'';
+  document.getElementById('ld-edit-ciudad').value=p.ciudad||'';
+  document.getElementById('ld-edit-ubicacion').value=p.ubicacion||'';
+  document.getElementById('ld-edit-nota').value=p.nota||'';
+  openModal('modal-ld-edit');
+}
+async function guardarLdEdit(){
+  if(!_ldEditKey)return;
+  const v=id=>document.getElementById(id).value.trim();
+  try{
+    await db.ref('pedidos/'+_ldEditKey).update({
+      cliente:v('ld-edit-cliente'),telefono:v('ld-edit-telefono'),ciudad:v('ld-edit-ciudad'),
+      ubicacion:v('ld-edit-ubicacion'),nota:v('ld-edit-nota')
+    });
+    setSyncStatus(true);showToast('Pedido actualizado');
+  }catch(e){setSyncStatus(false);showToast('No se pudo guardar');return;}
+  closeModal('modal-ld-edit');_ldEditKey=null;
+}
+// ── PEDIDOS POR DELIVERY (pantalla principal de Pedidos) ──
+function renderPorDelivery(){
+  const fEl=document.getElementById('pd-fecha');if(!fEl)return;
+  if(!fEl.value)fEl.value=today();
+  const f=fEl.value;
+  const delDia=pedidos.filter(p=>!p.interior&&(p.estado==='confirmado'||p.estado==='entregado')&&(p.fechaEntrega||p.fecha)===f);
+  const pend=pedidos.filter(p=>p.estado==='tomado').length;
+  const tot=delDia.reduce((s,p)=>s+(p.montoFinal||0),0);
+  const entregados=delDia.filter(p=>p.estado==='entregado').length;
+  document.getElementById('pd-resumen').innerHTML=`<div class="card" style="text-align:center;margin-bottom:10px">
+    <div style="font-size:22px;font-weight:800;color:var(--green2)">${delDia.length} pedidos · ${fmt(tot)}</div>
+    <div class="card-sub">Para entregar el ${ldFechaCorta(f)} · ${entregados} entregados</div>
+    ${pend?`<div style="margin-top:8px"><button class="ld-b" style="max-width:260px" onclick="showPage('leads')">⏳ ${pend} pendiente${pend===1?'':'s'} de confirmar en Leads</button></div>`:''}
+  </div>`;
+  const grupos=[...LD_DELIVERIES,'sin'];
+  const ord={manana:0,tarde:1};
+  const html=grupos.map(k=>{
+    let lista=k==='sin'?delDia.filter(p=>!p.delivery||!KB_DELIVERIES[p.delivery]):delDia.filter(p=>p.delivery===k||(k==='facu'&&p.delivery==='alterno'));
+    if(!lista.length&&k==='sin')return '';
+    lista=[...lista].sort((a,b)=>((a.estado==='entregado')-(b.estado==='entregado'))||((ord[a.turno]??2)-(ord[b.turno]??2))||((a.numero||0)-(b.numero||0)));
+    const nom=k==='sin'?'Sin delivery asignado':KB_DELIVERIES[k].nombre;
+    const m=lista.filter(p=>p.turno==='manana').length,t=lista.filter(p=>p.turno==='tarde').length;
+    const total=lista.reduce((s,p)=>s+(p.montoFinal||0),0);
+    const cards=lista.map(p=>{
+      const id=p.id||p._fbKey;const k2=ldKey(p);
+      const ent=p.estado==='entregado';
+      const turno=p.turno==='manana'?'🌅 Mañana':p.turno==='tarde'?'🌇 Tarde':'';
+      const ubi=p.ubicacion?(/^https?:\/\//i.test(p.ubicacion)?p.ubicacion:'https://www.google.com/maps/search/'+encodeURIComponent(p.ubicacion)):'';
+      return `<div class="ld-card ${ent?'ld-ent':'ld-conf'}" style="${ent?'opacity:.6':''}">
+        <div class="ld-top"><span class="ld-num">#${p.numero||'-'}${turno?' · '+turno:''}</span>${ent?'<span class="badge badge-green">Entregado</span>':`<span class="ld-monto">${fmt(p.montoFinal||0)}</span>`}</div>
+        <div class="ld-cli">${p.cliente||'Sin nombre'}</div>
+        <div class="ld-sub">${p.ciudad||'-'}${p.telefono?' · '+p.telefono:''}</div>
+        ${ubi?`<div class="ld-sub"><a href="${ubi}" target="_blank" style="color:var(--blue)">📍 ${p.ubicacion}</a></div>`:'<div class="ld-sub" style="color:var(--yellow)">📍 Falta dirección</div>'}
+        ${p.nota?`<div class="ld-sub">📝 ${p.nota}</div>`:''}
+        <div class="ld-res">${p.resumen||''}</div>
+        <div class="ld-row">
+          <button class="ld-b" onclick="generarMensajeDelivery('${id}')">Mensaje delivery</button>
+          ${ent?'':`<button class="ld-b b-conf" onclick="cambiarEstado('${k2}','entregado')">Entregado</button>`}
+          <button class="ld-b" onclick="ldEditar('${k2}')">Editar</button>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;padding:4px 2px 8px;border-bottom:2px solid var(--green);margin-bottom:8px">
+        <div style="font-weight:800;font-size:calc(var(--fs-mult,1)*16px)">${nom} <span class="kb-col-count">${lista.length}</span></div>
+        <div style="font-size:12px;color:var(--muted)">Mañana ${m} · Tarde ${t} · ${fmt(total)}</div>
+      </div>
+      ${lista.length&&k!=='sin'?`<button class="ld-b" style="width:100%;margin-bottom:8px" onclick="copiarTodosDelivery('${k}')">Copiar todos los mensajes de ${nom}</button>`:''}
+      ${cards||'<div class="empty">Sin pedidos</div>'}
+    </div>`;
+  }).join('');
+  document.getElementById('pd-grupos').innerHTML=html;
+}
+function copiarTodosDelivery(k){
+  const f=document.getElementById('pd-fecha').value||today();
+  const ord={manana:0,tarde:1};
+  const lista=pedidos.filter(p=>!p.interior&&p.estado==='confirmado'&&(p.fechaEntrega||p.fecha)===f&&(p.delivery===k||(k==='facu'&&p.delivery==='alterno')))
+    .sort((a,b)=>((ord[a.turno]??2)-(ord[b.turno]??2))||((a.numero||0)-(b.numero||0)));
+  if(!lista.length){showToast('No hay pedidos pendientes de entregar');return;}
+  const txt=lista.map(textoMensajeDelivery).join('\n\n━━━━━━━━━━━━\n\n');
+  navigator.clipboard.writeText(txt).then(()=>showToast(`${lista.length} mensajes copiados`)).catch(()=>showToast('No se pudo copiar'));
 }
 // CLIENTES
 // ── TABLERO KANBAN (Pedidos y Envíos) ─────────────────────────────────────────
