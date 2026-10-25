@@ -1355,7 +1355,9 @@ body:not(.theme-light) .kb-col{background:var(--surface);border:1px solid var(--
     <div class="form-group"><label class="form-label">Ciudad</label><input type="text" id="ld-edit-ciudad"></div>
     <div class="form-group"><label class="form-label">Dirección / ubicación (pegá el link de Maps o la dirección)</label><textarea id="ld-edit-ubicacion" style="min-height:70px;resize:vertical" placeholder="https://maps.app.goo.gl/... o calle y número"></textarea></div>
     <div class="form-group"><label class="form-label">Nota / referencia</label><textarea id="ld-edit-nota" style="min-height:60px;resize:vertical"></textarea></div>
-    <div class="form-group"><label class="form-label">Artículos (cantidad y precio por unidad)</label><div id="ld-edit-arts"></div></div>
+    <div class="form-group"><label class="form-label">Artículos (cantidad y precio por unidad)</label><div id="ld-edit-arts"></div>
+      <div style="display:flex;gap:6px;margin-top:6px"><select id="ld-edit-addprod" style="flex:1;min-width:0" onchange="ldEditPickProd()"></select><select id="ld-edit-addvar" style="display:none;max-width:40%"></select></div>
+      <button type="button" class="btn btn-outline" style="margin-top:6px" onclick="ldEditAddArt()">+ Agregar producto</button></div>
     <div class="form-group"><label class="form-label">Total del pedido (Gs.)</label><input type="number" id="ld-edit-total" oninput="this.dataset.manual=1"></div>
     <button class="btn btn-green" onclick="guardarLdEdit()">Guardar</button>
     <button class="btn btn-outline" onclick="closeModal('modal-ld-edit')">Cancelar</button>
@@ -3276,14 +3278,38 @@ function ldEditar(k){
   });
   const t=document.getElementById('ld-edit-total');t.value=p.montoFinal||0;delete t.dataset.manual;
   ldRenderEditArts(false);
+  const sel=document.getElementById('ld-edit-addprod');
+  sel.innerHTML='<option value="">Elegí un producto para agregar…</option>'+[...productos].sort((x,y)=>(x.nombre||'').localeCompare(y.nombre||'')).map(pr=>`<option value="${pr.id}">${pr.nombre} — ${fmt(pr.precio||0)}</option>`).join('');
+  ldEditPickProd();
   openModal('modal-ld-edit');
 }
+function ldEditPickProd(){
+  const pid=document.getElementById('ld-edit-addprod').value;
+  const pr=productos.find(x=>x.id===pid);
+  const vs=document.getElementById('ld-edit-addvar');
+  const vars=pr?.variantes||[];
+  if(vars.length){vs.innerHTML=vars.map(v=>`<option value="${v.id}">${v.color} (${v.stock??0})</option>`).join('');vs.style.display='';}
+  else{vs.innerHTML='';vs.style.display='none';}
+}
+function ldEditAddArt(){
+  const pid=document.getElementById('ld-edit-addprod').value;
+  const pr=productos.find(x=>x.id===pid);
+  if(!pr){showToast('Elegí un producto');return;}
+  const vid=document.getElementById('ld-edit-addvar').value||'';
+  const v=(pr.variantes||[]).find(x=>x.id===vid);
+  const ex=_ldEditArts.find(a=>a.pid===pr.id&&(a.vid||'')===(v?.id||''));
+  if(ex)ex.cant=(Number(ex.cant)||1)+1;
+  else _ldEditArts.push({pid:pr.id,nombre:pr.nombre,img:pr.img||'',vid:v?.id||'',vnom:v?.color||'',cant:1,precio:Number(pr.precio)||0});
+  ldRenderEditArts();
+  showToast(pr.nombre+' agregado');
+}
+function ldEditQuitar(i){_ldEditArts.splice(i,1);ldRenderEditArts();}
 let _ldEditArts=[];
 function ldRenderEditArts(recalc=true){
   const c=document.getElementById('ld-edit-arts');
   if(!_ldEditArts.length){c.innerHTML='<div style="color:var(--muted);font-size:13px">Este pedido no tiene artículos cargados</div>';return;}
   c.innerHTML=_ldEditArts.map((a,i)=>`<div style="border:1px solid var(--border);border-radius:10px;padding:8px;margin-bottom:6px">
-    <div style="font-weight:700;font-size:14px;margin-bottom:6px">${a.nombre}${a.vnom?' ('+a.vnom+')':''}</div>
+    <div style="display:flex;justify-content:space-between;gap:6px;font-weight:700;font-size:14px;margin-bottom:6px"><span>${a.nombre}${a.vnom?' ('+a.vnom+')':''}</span><button type="button" class="ld-b b-canc" onclick="ldEditQuitar(${i})">Quitar</button></div>
     <div style="display:flex;gap:6px;align-items:center">
       <button type="button" class="ld-b" onclick="ldEditCant(${i},-1)">−</button>
       <input type="number" min="1" value="${a.cant}" style="width:60px;text-align:center" onchange="ldEditSet(${i},'cant',this.value)">
@@ -3301,6 +3327,7 @@ async function guardarLdEdit(){
   const p=pedidos.find(x=>ldKey(x)===_ldEditKey);
   const upd={cliente:v('ld-edit-cliente'),telefono:v('ld-edit-telefono'),ciudad:v('ld-edit-ciudad'),
       ubicacion:v('ld-edit-ubicacion'),nota:v('ld-edit-nota')};
+  if(p&&!_ldEditArts.length&&(p.arts||[]).length){showToast('El pedido tiene que tener al menos un producto');return;}
   if(p&&_ldEditArts.length){
     const nuevosArts=_ldEditArts.map(a=>({...a,cant:Math.max(1,parseInt(a.cant)||1),precio:Number(a.precio)||0}));
     const total=parseFloat(document.getElementById('ld-edit-total').value)||0;
