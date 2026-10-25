@@ -1355,6 +1355,8 @@ body:not(.theme-light) .kb-col{background:var(--surface);border:1px solid var(--
     <div class="form-group"><label class="form-label">Ciudad</label><input type="text" id="ld-edit-ciudad"></div>
     <div class="form-group"><label class="form-label">Dirección / ubicación (pegá el link de Maps o la dirección)</label><textarea id="ld-edit-ubicacion" style="min-height:70px;resize:vertical" placeholder="https://maps.app.goo.gl/... o calle y número"></textarea></div>
     <div class="form-group"><label class="form-label">Nota / referencia</label><textarea id="ld-edit-nota" style="min-height:60px;resize:vertical"></textarea></div>
+    <div class="form-group"><label class="form-label">Artículos (cantidad y precio por unidad)</label><div id="ld-edit-arts"></div></div>
+    <div class="form-group"><label class="form-label">Total del pedido (Gs.)</label><input type="number" id="ld-edit-total" oninput="this.dataset.manual=1"></div>
     <button class="btn btn-green" onclick="guardarLdEdit()">Guardar</button>
     <button class="btn btn-outline" onclick="closeModal('modal-ld-edit')">Cancelar</button>
   </div>
@@ -3262,16 +3264,60 @@ function ldEditar(k){
   document.getElementById('ld-edit-ciudad').value=p.ciudad||'';
   document.getElementById('ld-edit-ubicacion').value=p.ubicacion||'';
   document.getElementById('ld-edit-nota').value=p.nota||'';
+  // Artículos: cantidad y precio por unidad editables
+  _ldEditArts=JSON.parse(JSON.stringify(p.arts||[]));
+  const cantTot=_ldEditArts.reduce((s,a)=>s+(Number(a.cant)||1),0)||1;
+  _ldEditArts.forEach(a=>{
+    a.cant=Number(a.cant)||1;
+    if(!(Number(a.precio)>0)){
+      const prod=productos.find(x=>x.id===a.pid);
+      a.precio=_ldEditArts.length===1?Math.round((p.montoFinal||0)/cantTot):(Number(prod?.precio)||0);
+    }
+  });
+  const t=document.getElementById('ld-edit-total');t.value=p.montoFinal||0;delete t.dataset.manual;
+  ldRenderEditArts(false);
   openModal('modal-ld-edit');
 }
+let _ldEditArts=[];
+function ldRenderEditArts(recalc=true){
+  const c=document.getElementById('ld-edit-arts');
+  if(!_ldEditArts.length){c.innerHTML='<div style="color:var(--muted);font-size:13px">Este pedido no tiene artículos cargados</div>';return;}
+  c.innerHTML=_ldEditArts.map((a,i)=>`<div style="border:1px solid var(--border);border-radius:10px;padding:8px;margin-bottom:6px">
+    <div style="font-weight:700;font-size:14px;margin-bottom:6px">${a.nombre}${a.vnom?' ('+a.vnom+')':''}</div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <button type="button" class="ld-b" onclick="ldEditCant(${i},-1)">−</button>
+      <input type="number" min="1" value="${a.cant}" style="width:60px;text-align:center" onchange="ldEditSet(${i},'cant',this.value)">
+      <button type="button" class="ld-b" onclick="ldEditCant(${i},1)">+</button>
+      <span style="font-size:12px;color:var(--muted)">x Gs.</span>
+      <input type="number" value="${a.precio}" style="flex:1;min-width:0" onchange="ldEditSet(${i},'precio',this.value)">
+    </div></div>`).join('');
+  if(recalc){const t=document.getElementById('ld-edit-total');delete t.dataset.manual;t.value=_ldEditArts.reduce((s,a)=>s+(Number(a.precio)||0)*(Number(a.cant)||1),0);}
+}
+function ldEditCant(i,d){_ldEditArts[i].cant=Math.max(1,(Number(_ldEditArts[i].cant)||1)+d);ldRenderEditArts();}
+function ldEditSet(i,f,v){_ldEditArts[i][f]=f==='cant'?Math.max(1,parseInt(v)||1):(Number(v)||0);ldRenderEditArts();}
 async function guardarLdEdit(){
   if(!_ldEditKey)return;
   const v=id=>document.getElementById(id).value.trim();
+  const p=pedidos.find(x=>ldKey(x)===_ldEditKey);
+  const upd={cliente:v('ld-edit-cliente'),telefono:v('ld-edit-telefono'),ciudad:v('ld-edit-ciudad'),
+      ubicacion:v('ld-edit-ubicacion'),nota:v('ld-edit-nota')};
+  if(p&&_ldEditArts.length){
+    const nuevosArts=_ldEditArts.map(a=>({...a,cant:Math.max(1,parseInt(a.cant)||1),precio:Number(a.precio)||0}));
+    const total=parseFloat(document.getElementById('ld-edit-total').value)||0;
+    if(total<=0){showToast('Poné el total del pedido');return;}
+    const cambioArts=JSON.stringify((p.arts||[]).map(a=>[a.pid,a.vid,Number(a.cant)||1]))!==JSON.stringify(nuevosArts.map(a=>[a.pid,a.vid,a.cant]));
+    // Si el pedido ya descontó stock (confirmado/entregado), devolver lo viejo y descontar lo nuevo
+    if(cambioArts&&(p.estado==='confirmado'||p.estado==='entregado')&&stockYaDescontado(p)){
+      await ajustarStock(p.arts||[],+1);
+      const f=await ajustarStock(nuevosArts,-1);
+      if(f.length)showToast('Revisá stock: '+f.join(', '));
+    }
+    upd.arts=nuevosArts;
+    upd.resumen=nuevosArts.map(a=>`${a.nombre}${a.vnom?' ('+a.vnom+')':''} x${a.cant}`).join(', ');
+    upd.montoFinal=total;
+  }
   try{
-    await db.ref('pedidos/'+_ldEditKey).update({
-      cliente:v('ld-edit-cliente'),telefono:v('ld-edit-telefono'),ciudad:v('ld-edit-ciudad'),
-      ubicacion:v('ld-edit-ubicacion'),nota:v('ld-edit-nota')
-    });
+    await db.ref('pedidos/'+_ldEditKey).update(upd);
     setSyncStatus(true);showToast('Pedido actualizado');
   }catch(e){setSyncStatus(false);showToast('No se pudo guardar');return;}
   closeModal('modal-ld-edit');_ldEditKey=null;
