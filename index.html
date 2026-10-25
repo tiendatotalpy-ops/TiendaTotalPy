@@ -1356,6 +1356,7 @@ body:not(.theme-light) .kb-col{background:var(--surface);border:1px solid var(--
     <div class="form-group"><label class="form-label">Dirección / ubicación (pegá el link de Maps o la dirección)</label><textarea id="ld-edit-ubicacion" style="min-height:70px;resize:vertical" placeholder="https://maps.app.goo.gl/... o calle y número"></textarea></div>
     <div class="form-group"><label class="form-label">Nota / referencia</label><textarea id="ld-edit-nota" style="min-height:60px;resize:vertical"></textarea></div>
     <div class="form-group"><label class="form-label">Artículos (cantidad y precio por unidad)</label><div id="ld-edit-arts"></div>
+      <input type="text" id="ld-edit-buscar" placeholder="🔍 Buscar producto por nombre…" oninput="ldEditFiltrar()" style="margin-top:6px">
       <div style="display:flex;gap:6px;margin-top:6px"><select id="ld-edit-addprod" style="flex:1;min-width:0" onchange="ldEditPickProd()"></select><select id="ld-edit-addvar" style="display:none;max-width:40%"></select></div>
       <button type="button" class="btn btn-outline" style="margin-top:6px" onclick="ldEditAddArt()">+ Agregar producto</button></div>
     <div class="form-group"><label class="form-label">Total del pedido (Gs.)</label><input type="number" id="ld-edit-total" oninput="this.dataset.manual=1"></div>
@@ -3229,6 +3230,7 @@ function ldCard(p){
       <button class="ld-b b-canc ${est==='rechazado'?'on':''}" onclick="ldEstado('${k}','rechazado')">Cancelar</button>
       <button class="ld-b" onclick="abrirReprogramar('${k}')">Reprogramar</button>
       <button class="ld-b" onclick="ldEditar('${k}')">Editar</button>
+      <button class="ld-b" onclick="ldCopiarPedido('${k}')">Copiar pedido</button>
     </div>
     <div class="ld-row"><div class="ld-lbl">Delivery</div>${delBtns}</div>
     <div class="ld-row"><div class="ld-lbl">Turno</div>
@@ -3278,10 +3280,21 @@ function ldEditar(k){
   });
   const t=document.getElementById('ld-edit-total');t.value=p.montoFinal||0;delete t.dataset.manual;
   ldRenderEditArts(false);
-  const sel=document.getElementById('ld-edit-addprod');
-  sel.innerHTML='<option value="">Elegí un producto para agregar…</option>'+[...productos].sort((x,y)=>(x.nombre||'').localeCompare(y.nombre||'')).map(pr=>`<option value="${pr.id}">${pr.nombre} — ${fmt(pr.precio||0)}</option>`).join('');
-  ldEditPickProd();
+  document.getElementById('ld-edit-buscar').value='';
+  ldEditFiltrar();
   openModal('modal-ld-edit');
+}
+function ldEditFiltrar(){
+  const norm=t=>(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const q=norm(document.getElementById('ld-edit-buscar').value.trim());
+  const lista=[...productos].filter(pr=>!q||norm(pr.nombre).includes(q)).sort((x,y)=>(x.nombre||'').localeCompare(y.nombre||''));
+  const sel=document.getElementById('ld-edit-addprod');
+  sel.innerHTML=(q?'':'<option value="">Elegí un producto para agregar…</option>')+(lista.length?lista.map(pr=>`<option value="${pr.id}">${pr.nombre} — ${fmt(pr.precio||0)}</option>`).join(''):'<option value="">No hay productos con ese nombre</option>');
+  ldEditPickProd();
+}
+function ldCopiarPedido(k){
+  const p=pedidos.find(x=>ldKey(x)===k);if(!p)return;
+  navigator.clipboard.writeText(textoMensajeDelivery(p)).then(()=>showToast('Pedido copiado')).catch(()=>showToast('No se pudo copiar'));
 }
 function ldEditPickProd(){
   const pid=document.getElementById('ld-edit-addprod').value;
