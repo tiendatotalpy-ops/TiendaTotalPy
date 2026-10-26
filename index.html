@@ -2165,6 +2165,12 @@ async function ajustarStock(arts,sentido){
   for(const a of(arts||[])){
     if(!a||!a.pid)continue;
     const p=productos.find(x=>x.id===a.pid);if(!p)continue;
+    // Combos: el producto no tiene stock propio, se mueve el stock de sus componentes
+    if(Array.isArray(p.componentes)&&p.componentes.length){
+      const subArts=p.componentes.map(c=>{const cp=productos.find(x=>x.id===c.pid);return{pid:c.pid,vid:c.vid||'',vnom:c.vnom||'',nombre:cp?cp.nombre:(c.nombre||''),cant:(c.cant||1)*(a.cant||1)};});
+      faltantes.push(...await ajustarStock(subArts,sentido));
+      continue;
+    }
     const cant=(a.cant||1)*sentido;
     const vars=p.variantes||[];
     let idx=a.vid?vars.findIndex(v=>v.id===a.vid):-1;
