@@ -1775,13 +1775,13 @@ function renderDashboard(){
 
   const{from,to}=getPeriodDates();
   const inRange=f=>f&&f>=from&&f<=to;
-  // Pedidos tomados en el período (no rechazados, ya que esos no facturan)
-  const pPeriod=pedidos.filter(p=>inRange(p.fecha)&&p.estado!=='rechazado');
+  // Solo ventas confirmadas/entregadas del período (por fecha de confirmación); tomados y rechazados no cuentan
+  const pPeriod=pedidos.filter(p=>esVenta(p)&&inRange(fechaVenta(p)));
 
   const cantPedidos=pPeriod.length;
   const cantUnidades=pPeriod.reduce((s,p)=>s+(p.arts||[]).reduce((ss,a)=>ss+a.cant,0),0);
   const costoMercaderia=pPeriod.reduce((s,p)=>s+(p.arts||[]).reduce((ss,a)=>{
-    const costoUnit=a.costo!=null?a.costo:(()=>{const pr=productos.find(x=>x.id===a.pid);return pr?pr.costo:0;})();
+    const costoUnit=a.costo?a.costo:(()=>{const pr=productos.find(x=>x.id===a.pid);return pr?pr.costo||0:0;})();
     return ss+costoUnit*a.cant;
   },0),0);
 
@@ -1805,7 +1805,7 @@ function renderDashboard(){
   const facturadoMes=pedidos.filter(p=>esVenta(p)&&(fechaVenta(p)||'').startsWith(mesActual)).reduce((s,p)=>s+(p.montoFinal||0),0);
   // Publicidad real y ganancia neta del mes
   {
-    const costoPedido=p=>(p.arts||[]).reduce((ss,a)=>{const cu=a.costo!=null?a.costo:(()=>{const pr=productos.find(x=>x.id===a.pid);return pr?pr.costo||0:0;})();return ss+cu*(a.cant||1);},0);
+    const costoPedido=p=>(p.arts||[]).reduce((ss,a)=>{const cu=a.costo?a.costo:(()=>{const pr=productos.find(x=>x.id===a.pid);return pr?pr.costo||0:0;})();return ss+cu*(a.cant||1);},0);
     const ventasMesArr=pedidos.filter(p=>esVenta(p)&&(fechaVenta(p)||'').startsWith(mesActual));
     const adsHoy=adsDia(hoyStr);
     const adsMes=Object.keys(gastoAds||{}).filter(d=>d.startsWith(mesActual)).reduce((s,d)=>s+adsDia(d),0);
