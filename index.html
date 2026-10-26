@@ -3367,8 +3367,11 @@ function renderPorDelivery(){
   const fEl=document.getElementById('pd-fecha');if(!fEl)return;
   if(!fEl.value)fEl.value=today();
   const f=fEl.value;
-  const delDia=pedidos.filter(p=>!p.interior&&(p.estado==='confirmado'||p.estado==='entregado')&&(p.fechaEntrega||p.fecha)===f);
-  const pend=pedidos.filter(p=>p.estado==='tomado').length;
+  const fe=p=>(p.fechaEntrega||p.fecha||'');
+  // Se ven: los del día + TODOS los confirmados sin entregar de días anteriores (atrasados), para que nunca desaparezca un pedido
+  const delDia=pedidos.filter(p=>!p.interior&&((p.estado==='confirmado'&&fe(p)<=f)||(p.estado==='entregado'&&fe(p)===f)));
+  const tomados=pedidos.filter(p=>!p.interior&&p.estado==='tomado');
+  const pend=tomados.length;
   const tot=delDia.reduce((s,p)=>s+(p.montoFinal||0),0);
   const entregados=delDia.filter(p=>p.estado==='entregado').length;
   document.getElementById('pd-resumen').innerHTML=`<div class="card" style="text-align:center;margin-bottom:10px">
@@ -3391,7 +3394,7 @@ function renderPorDelivery(){
       const turno=p.turno==='manana'?'🌅 Mañana':p.turno==='tarde'?'🌇 Tarde':'';
       const ubi=p.ubicacion?(/^https?:\/\//i.test(p.ubicacion)?p.ubicacion:'https://www.google.com/maps/search/'+encodeURIComponent(p.ubicacion)):'';
       return `<div class="ld-card ${ent?'ld-ent':'ld-conf'}" style="${ent?'opacity:.6':''}">
-        <div class="ld-top"><span class="ld-num">#${p.numero||'-'}${turno?' · '+turno:''}</span>${ent?'<span class="badge badge-green">Entregado</span>':`<span class="ld-monto">${fmt(p.montoFinal||0)}</span>`}</div>
+        <div class="ld-top"><span class="ld-num">#${p.numero||'-'}${turno?' · '+turno:''}${!ent&&fe(p)<f?' · <span style="color:var(--red,#e5484d);font-weight:800">Atrasado '+ldFechaCorta(fe(p))+'</span>':''}</span>${ent?'<span class="badge badge-green">Entregado</span>':`<span class="ld-monto">${fmt(p.montoFinal||0)}</span>`}</div>
         <div class="ld-cli">${p.cliente||'Sin nombre'}</div>
         <div class="ld-sub">${p.ciudad||'-'}${p.telefono?' · '+p.telefono:''}</div>
         ${ubi?`<div class="ld-sub"><a href="${ubi}" target="_blank" style="color:var(--blue)">📍 ${p.ubicacion}</a></div>`:'<div class="ld-sub" style="color:var(--yellow)">📍 Falta dirección</div>'}
@@ -3413,12 +3416,24 @@ function renderPorDelivery(){
       ${cards||'<div class="empty">Sin pedidos</div>'}
     </div>`;
   }).join('');
-  document.getElementById('pd-grupos').innerHTML=html;
+  const tomHtml=tomados.length?`<div style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;padding:4px 2px 8px;border-bottom:2px solid var(--yellow);margin-bottom:8px">
+        <div style="font-weight:800;font-size:calc(var(--fs-mult,1)*16px)">Sin confirmar (Leads) <span class="kb-col-count">${tomados.length}</span></div>
+        <div style="font-size:12px;color:var(--muted)">${fmt(tomados.reduce((s,p)=>s+(p.montoFinal||0),0))}</div>
+      </div>
+      ${[...tomados].sort((a,b)=>(a.numero||0)-(b.numero||0)).map(p=>`<div class="ld-card" style="cursor:pointer" onclick="showPage('leads')">
+        <div class="ld-top"><span class="ld-num">#${p.numero||'-'} · ${ldFechaCorta(fe(p))}</span><span class="ld-monto">${fmt(p.montoFinal||0)}</span></div>
+        <div class="ld-cli">${p.cliente||'Sin nombre'}</div>
+        <div class="ld-sub">${p.ciudad||'-'}${p.telefono?' · '+p.telefono:''}</div>
+        <div class="ld-res">${p.resumen||''}</div>
+      </div>`).join('')}
+    </div>`:'';
+  document.getElementById('pd-grupos').innerHTML=html+tomHtml;
 }
 function copiarTodosDelivery(k){
   const f=document.getElementById('pd-fecha').value||today();
   const ord={manana:0,tarde:1};
-  const lista=pedidos.filter(p=>!p.interior&&p.estado==='confirmado'&&(p.fechaEntrega||p.fecha)===f&&(p.delivery===k||(k==='facu'&&p.delivery==='alterno')))
+  const lista=pedidos.filter(p=>!p.interior&&p.estado==='confirmado'&&(p.fechaEntrega||p.fecha||'')<=f&&(p.delivery===k||(k==='facu'&&p.delivery==='alterno')))
     .sort((a,b)=>((ord[a.turno]??2)-(ord[b.turno]??2))||((a.numero||0)-(b.numero||0)));
   if(!lista.length){showToast('No hay pedidos pendientes de entregar');return;}
   const txt=lista.map(textoMensajeDelivery).join('\n\n━━━━━━━━━━━━\n\n');
