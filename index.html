@@ -650,6 +650,32 @@ body:not(.theme-light) .kb-col{background:var(--surface);border:1px solid var(--
     </div>
   </div>
 
+  <div class="mb-card" id="rd-box">
+    <div class="mb-row" style="margin-bottom:8px">
+      <div class="mb-label" style="margin:0">Resumen del día</div>
+      <div style="display:flex;gap:6px">
+        <button class="mb-pill" id="rd-btn-ayer" onclick="rdSet(-1)">Ayer</button>
+        <button class="mb-pill" id="rd-btn-hoy" onclick="rdSet(0)">Hoy</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <button class="mb-pill" onclick="rdMove(-1)" style="min-width:40px">◀</button>
+      <input type="date" id="rd-fecha" onchange="rdFecha=this.value;renderResumenDia()" style="flex:1">
+      <button class="mb-pill" onclick="rdMove(1)" style="min-width:40px">▶</button>
+    </div>
+    <div class="ld-kpis" style="margin:0">
+      <div><div class="mb-sub">Gasté (Meta)</div><div class="mb-value mb-value-sm" id="rd-gasto">-</div></div>
+      <div><div class="mb-sub">Ventas</div><div class="mb-value mb-value-sm" id="rd-ventas">-</div></div>
+      <div><div class="mb-sub">Vendí (facturado)</div><div class="mb-value mb-value-sm" id="rd-facturado">-</div></div>
+      <div><div class="mb-sub">Costo por venta</div><div class="mb-value mb-value-sm" id="rd-cpv">-</div></div>
+    </div>
+    <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
+      <div class="mb-sub">Gané (neto)</div>
+      <div class="mb-value" id="rd-ganancia">-</div>
+      <div class="mb-sub" id="rd-detalle"></div>
+    </div>
+  </div>
+
   <div class="ld-kpis">
     <div class="mb-card" style="cursor:pointer;margin:0" onclick="showPage('leads')">
       <div class="mb-icon mb-icon-dark"><svg class="tt-ic" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" width="20" height="20"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg></div>
@@ -1757,7 +1783,39 @@ function irADashEntregarHoy(){
   document.getElementById('entregas-fecha').value=today();
   renderEntregas();
 }
+let rdFecha=null;
+function rdSet(off){rdFecha=addDays(today(),off);renderResumenDia();}
+function rdMove(d){rdFecha=addDays(rdFecha||addDays(today(),-1),d);if(rdFecha>today())rdFecha=today();renderResumenDia();}
+function renderResumenDia(){
+  if(!rdFecha)rdFecha=addDays(today(),-1);
+  const f=rdFecha;
+  const inp=document.getElementById('rd-fecha');if(inp&&inp.value!==f)inp.value=f;
+  const bA=document.getElementById('rd-btn-ayer'),bH=document.getElementById('rd-btn-hoy');
+  if(bA)bA.classList.toggle('active',f===addDays(today(),-1));
+  if(bH)bH.classList.toggle('active',f===today());
+  const st=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  const ventas=pedidos.filter(p=>esVenta(p)&&fechaVenta(p)===f);
+  const facturado=ventas.reduce((s,p)=>s+(p.montoFinal||0),0);
+  const costoPedido=p=>(p.arts||[]).reduce((ss,a)=>{const cu=a.costo?a.costo:(()=>{const pr=productos.find(x=>x.id===a.pid);return pr?pr.costo||0:0;})();return ss+cu*(a.cant||1);},0);
+  const mercaderia=ventas.reduce((s,p)=>s+costoPedido(p),0);
+  const envio=25000*ventas.length;
+  const reg=gastoAds&&gastoAds[f];
+  const hayAds=!!reg;
+  const ads=hayAds?Math.round(Number(reg.spend)||0):0;
+  const neta=facturado-mercaderia-envio-ads;
+  st('rd-gasto',hayAds?fmt(ads):'Sin dato');
+  st('rd-ventas',ventas.length);
+  st('rd-facturado',fmt(facturado));
+  st('rd-cpv',hayAds?(ventas.length?fmt(ads/ventas.length):'Sin ventas'):'-');
+  st('rd-ganancia',fmt(neta));
+  const g=document.getElementById('rd-ganancia');if(g)g.style.color=neta>=0?'var(--green2)':'var(--red)';
+  let det=`Vendí ${fmt(facturado)} − mercadería ${fmt(mercaderia)} − envío ${fmt(envio)} − Meta ${fmt(ads)}`;
+  if(!hayAds)det+=' (falta cargar el gasto de Meta de este día)';
+  else if(reg.actualizado&&f===today())det+=` · Meta act. ${new Date(reg.actualizado).toLocaleTimeString('es-PY',{hour:'2-digit',minute:'2-digit',timeZone:'America/Asuncion'})}`;
+  st('rd-detalle',det);
+}
 function renderDashboard(){
+  try{renderResumenDia();}catch(e){console.error(e);}
   // Contadores fijos de HOY, independientes del filtro de período de arriba
   const hoyStr=today();
   const dashEntregarHoy=pedidos.filter(p=>!p.interior&&(p.fechaEntrega||p.fecha)===hoyStr&&p.estado!=='rechazado').length;
