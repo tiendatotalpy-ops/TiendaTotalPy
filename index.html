@@ -3432,8 +3432,9 @@ function renderPorDelivery(){
   if(!fEl.value)fEl.value=today();
   const f=fEl.value;
   const fe=p=>(p.fechaEntrega||p.fecha||'');
-  // Se ven: los del día + TODOS los confirmados sin entregar de días anteriores (atrasados), para que nunca desaparezca un pedido
-  const delDia=pedidos.filter(p=>!p.interior&&((p.estado==='confirmado'&&fe(p)<=f)||(p.estado==='entregado'&&fe(p)===f)));
+  // Solo los pedidos con fecha de entrega en el día elegido (confirmados o entregados).
+  // Antes se arrastraban todos los confirmados de días anteriores y la lista se llenaba de pedidos viejos.
+  const delDia=pedidos.filter(p=>!p.interior&&(p.estado==='confirmado'||p.estado==='entregado')&&fe(p)===f);
   const tomados=pedidos.filter(p=>!p.interior&&p.estado==='tomado');
   const pend=tomados.length;
   const tot=delDia.reduce((s,p)=>s+(p.montoFinal||0),0);
@@ -3497,7 +3498,7 @@ function renderPorDelivery(){
 function copiarTodosDelivery(k){
   const f=document.getElementById('pd-fecha').value||today();
   const ord={manana:0,tarde:1};
-  const lista=pedidos.filter(p=>!p.interior&&p.estado==='confirmado'&&(p.fechaEntrega||p.fecha||'')<=f&&(p.delivery===k||(k==='facu'&&p.delivery==='alterno')))
+  const lista=pedidos.filter(p=>!p.interior&&p.estado==='confirmado'&&(p.fechaEntrega||p.fecha||'')===f&&(p.delivery===k||(k==='facu'&&p.delivery==='alterno')))
     .sort((a,b)=>((ord[a.turno]??2)-(ord[b.turno]??2))||((a.numero||0)-(b.numero||0)));
   if(!lista.length){showToast('No hay pedidos pendientes de entregar');return;}
   const txt=lista.map(textoMensajeDelivery).join('\n\n━━━━━━━━━━━━\n\n');
