@@ -3291,6 +3291,7 @@ function ldCard(p){
     <div class="ld-top"><span class="ld-monto">${fmt(p.montoFinal||0)}</span><span class="ld-sub">Entrega ${ldFechaCorta(p.fechaEntrega||p.fecha)}${rep}</span></div>
     <div class="ld-row">
       <button class="ld-b b-conf ${est==='confirmado'||est==='entregado'?'on':''}" onclick="ldEstado('${k}','confirmado')">Confirmar</button>
+      <button class="ld-b b-conf ${(est==='confirmado'||est==='entregado')&&(p.fechaEntrega||p.fecha)===proximoDiaEntrega()?'on':''}" onclick="ldManana('${k}')">Mañana</button>
       <button class="ld-b b-canc ${est==='rechazado'?'on':''}" onclick="ldEstado('${k}','rechazado')">Cancelar</button>
       <button class="ld-b" onclick="abrirReprogramar('${k}')">Reprogramar</button>
       <button class="ld-b" onclick="ldEditar('${k}')">Editar</button>
@@ -3309,6 +3310,19 @@ async function ldEstado(k,newE){
   if(newE==='rechazado'&&p.estado!=='rechazado'&&!confirm(`¿Cancelar el pedido #${p.numero||''} de ${p.cliente||''}?`))return;
   if(p.estado===newE&&!p.reprogramado){showToast('ℹ️ Ya está '+(newE==='rechazado'?'cancelado':'confirmado'));return;}
   await cambiarEstado(k,newE);
+}
+// Próximo día hábil de entrega desde hoy (el domingo no se reparte → lunes)
+function proximoDiaEntrega(){let f=addDays(today(),1);if(esDomingo(f))f=addDays(f,1);return f;}
+// Confirma el pedido y lo deja para entregar el próximo día, en un solo toque
+async function ldManana(k){
+  const p=pedidos.find(x=>ldKey(x)===k);if(!p)return;
+  const f=proximoDiaEntrega();
+  try{
+    await fbSet('pedidos/'+k+'/fechaEntrega',f);
+    if(p.estado!=='confirmado'&&p.estado!=='entregado')await cambiarEstado(k,'confirmado');
+    showToast('Confirmado para entregar el '+ldFechaCorta(f));
+  }catch(e){showToast('No se pudo guardar');}
+  if(typeof renderLeads==='function')renderLeads();
 }
 async function ldDelivery(k,d){
   const p=pedidos.find(x=>ldKey(x)===k);if(!p)return;
