@@ -899,6 +899,12 @@ body:not(.theme-light) .kb-col{background:var(--surface);border:1px solid var(--
           <div class="card-sub">unidades</div>
         </div>
       </div>
+      <div style="display:flex;justify-content:space-around;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+        <div><div style="font-size:20px;font-weight:800;color:var(--blue)" id="hoy-pend">0</div><div class="card-sub">por entregar</div></div>
+        <div><div style="font-size:20px;font-weight:800;color:var(--green2)" id="hoy-ent">0</div><div class="card-sub">entregados</div></div>
+      </div>
+      <div style="margin-top:8px;font-size:13px">A cobrar: <b id="hoy-cobrar">₲ 0</b> · Total del día: <b id="hoy-total">₲ 0</b></div>
+      <div id="hoy-detalle" style="font-size:12px;color:var(--muted);margin-top:4px"></div>
       <div style="font-size:11px;color:var(--blue);margin-top:6px">Toca para ver la lista</div>
     </div>
     <input type="text" class="search-box" id="p-buscar-nombre" placeholder="Buscar por nombre de cliente..." oninput="renderPedidosList()" style="margin-bottom:8px">
@@ -1818,7 +1824,7 @@ function renderDashboard(){
   try{renderResumenDia();}catch(e){console.error(e);}
   // Contadores fijos de HOY, independientes del filtro de período de arriba
   const hoyStr=today();
-  const dashEntregarHoy=pedidos.filter(p=>!p.interior&&(p.fechaEntrega||p.fecha)===hoyStr&&p.estado!=='rechazado').length;
+  const dashEntregarHoy=pedidos.filter(p=>!p.interior&&(p.fechaEntrega||p.fecha)===hoyStr&&(p.estado==='confirmado'||p.estado==='entregado')).length;
   const elEH=document.getElementById('dash-entregar-hoy');
   if(elEH)elEH.textContent=dashEntregarHoy;
   // Leads = todo lo que entró hoy (cualquier estado). Ventas = confirmadas/entregadas, por fecha de confirmación.
@@ -1932,7 +1938,7 @@ function renderDashChart(){
   for(let i=6;i>=0;i--){
     const d=addDays(today(),-i);
     dias.push(new Date(d+'T00:00:00').toLocaleDateString('es-PY',{weekday:'short'}).replace('.',''));
-    const total=pedidos.filter(p=>p.fecha===d&&p.estado!=='rechazado').reduce((s,p)=>s+(p.montoFinal||0),0);
+    const total=pedidos.filter(p=>p.fecha===d&&(p.estado==='confirmado'||p.estado==='entregado')).reduce((s,p)=>s+(p.montoFinal||0),0);
     valores.push(total);
   }
   const totalSemana=valores.reduce((a,b)=>a+b,0);
@@ -2509,15 +2515,25 @@ function setFiltroFecha(t){
 }
 function renderContadorHoy(){
   const hoy=today();
-  // Respeta el corte de entrega (HORA_CORTE_ENTREGA): fechaEntrega ya viene calculada con esa regla
-  // desde calcFechaEntrega() al cargar o editar el pedido.
-  const hoyList=pedidos.filter(p=>!p.interior&&(p.fechaEntrega||p.fecha)===hoy&&p.estado!=='rechazado');
-  const cantPedidos=hoyList.length;
-  const cantUnidades=hoyList.reduce((s,p)=>s+(p.arts||[]).reduce((ss,a)=>ss+(a.cant||0),0),0);
-  const elP=document.getElementById('hoy-cant-pedidos');
-  const elU=document.getElementById('hoy-cant-unidades');
-  if(elP)elP.textContent=cantPedidos;
-  if(elU)elU.textContent=cantUnidades;
+  // Solo cuenta lo confirmado (y lo ya entregado) con fecha de entrega HOY. Los "tomados" (leads sin confirmar) NO suman.
+  const hoyList=pedidos.filter(p=>!p.interior&&(p.fechaEntrega||p.fecha)===hoy&&(p.estado==='confirmado'||p.estado==='entregado'));
+  const uni=l=>l.reduce((s,p)=>s+(p.arts||[]).reduce((ss,a)=>ss+(a.cant||0),0),0);
+  const pendList=hoyList.filter(p=>p.estado==='confirmado');
+  const entList=hoyList.filter(p=>p.estado==='entregado');
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  set('hoy-cant-pedidos',hoyList.length);
+  set('hoy-cant-unidades',uni(hoyList));
+  set('hoy-pend',pendList.length);
+  set('hoy-ent',entList.length);
+  set('hoy-cobrar',fmt(pendList.reduce((s,p)=>s+(p.montoFinal||0),0)));
+  set('hoy-total',fmt(hoyList.reduce((s,p)=>s+(p.montoFinal||0),0)));
+  const dels={tobi:'Tobi',dam:'DAM',tsi:'TSI',facu:'Propio',alterno:'Propio'};
+  const cnt={};
+  pendList.forEach(p=>{const k=dels[p.delivery]||'Sin delivery';cnt[k]=(cnt[k]||0)+1;});
+  const tomadosHoy=pedidos.filter(p=>!p.interior&&p.estado==='tomado'&&(p.fechaEntrega||p.fecha)===hoy).length;
+  const det=document.getElementById('hoy-detalle');
+  if(det)det.innerHTML=(Object.keys(cnt).length?'Por entregar: '+Object.entries(cnt).map(([k,v])=>k+' '+v).join(' · '):'Nada pendiente de entrega')
+    +(tomadosHoy?`<br><span style="color:var(--yellow)">${tomadosHoy} sin confirmar (no suman)</span>`:'');
 }
 function irAPedidosHoy(){
   document.getElementById('p-buscar-nombre').value='';
@@ -3686,7 +3702,7 @@ function renderEntregas(){
   fechaEl.value=fecha;
   // Los reprogramados ya mueven su fechaEntrega al día siguiente al marcarlos,
   // así que aparecen solos en la fecha correcta sin necesitar arrastre.
-  const list=pedidos.filter(p=>!p.interior&&p.estado!=='rechazado'&&(p.fechaEntrega||p.fecha)===fecha)
+  const list=pedidos.filter(p=>!p.interior&&(p.estado==='confirmado'||p.estado==='entregado')&&(p.fechaEntrega||p.fecha)===fecha)
     .sort((a,b)=>(a.numero||0)-(b.numero||0));
 
   const cantUnidades=list.reduce((s,p)=>s+(p.arts||[]).reduce((ss,a)=>ss+(a.cant||0),0),0);
