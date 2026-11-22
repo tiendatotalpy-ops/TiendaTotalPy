@@ -4095,6 +4095,26 @@ async function adjStock(pid,vid,delta){
   productos.forEach(pr=>(pr.variantes||[]).forEach(vr=>{totalU+=vr.stock||0;totalV+=(vr.stock||0)*(pr.costo||0);}));
   const iu=document.getElementById('inv-unidades');const iv=document.getElementById('inv-valor');
   if(iu)iu.textContent=totalU;if(iv)iv.textContent=fmt(totalV);
+  renderStockRes();
+}
+
+// ---- Stock doble: Oficina / Casa. "stock" sigue siendo el TOTAL; "casa" = unidades que están en casa.
+// Oficina = total - casa. Las ventas descuentan del total (primero queda lo de casa, que no se toca).
+function casaDe(x){return Math.min(Math.max(0,Number(x&&x.casa)||0),Math.max(0,Number(x&&x.stock)||0));}
+function casaLinea(pid,vid,x){
+  const tot=Math.max(0,Number(x&&x.stock)||0),ca=casaDe(x),of=tot-ca;
+  const b='padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:inherit;font-size:12px;cursor:pointer';
+  return `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:-4px 0 8px 8px;font-size:12.5px"><span>🏢 Oficina <b>${of}</b></span><span>·</span><span>🏠 Casa <b>${ca}</b></span><button style="${b}" onclick="moverCasa('${pid}','${vid||''}',1)">→ Casa</button><button style="${b}" onclick="moverCasa('${pid}','${vid||''}',-1)">→ Oficina</button></div>`;
+}
+async function moverCasa(pid,vid,delta){
+  const p=productos.find(x=>x.id===pid);if(!p)return;
+  let ref,x;
+  if(vid){const idx=(p.variantes||[]).findIndex(v=>v.id===vid);if(idx<0)return;x=p.variantes[idx];ref=db.ref('productos/'+pid+'/variantes/'+idx+'/casa');}
+  else{x=p;ref=db.ref('productos/'+pid+'/casa');}
+  const tot=Math.max(0,Number(x.stock)||0),nuevo=casaDe(x)+delta;
+  if(nuevo<0||nuevo>tot){showToast(delta>0?'No quedan unidades en la oficina':'No hay unidades en casa');return;}
+  try{await ref.set(nuevo);x.casa=nuevo;setSyncStatus(true);}catch(e){setSyncStatus(false);}
+  renderStockRes();
 }
 function renderStockRes(){
   const el=document.getElementById('stock-res');if(!el)return;
@@ -4135,7 +4155,9 @@ function renderStockRes(){
   if(iu)iu.textContent=totalUnidades;
   if(iv)iv.textContent=fmt(totalValor);
   if(!productos.length){el.innerHTML='<div class="empty">Sin productos</div>';return;}
-  el.innerHTML=productos.map(p=>`<div class="card">
+  let _of=0,_ca=0;
+  productos.forEach(p=>{if((p.variantes||[]).length){p.variantes.forEach(v=>{const t=Math.max(0,Number(v.stock)||0),c=casaDe(v);_ca+=c;_of+=t-c;});}else{const t=Math.max(0,Number(p.stock)||0),c=casaDe(p);_ca+=c;_of+=t-c;}});
+  el.innerHTML=`<div class="card" style="display:flex;gap:18px;font-size:calc(var(--fs-mult,1)*14px)"><span>🏢 Oficina: <b>${_of}</b> unid.</span><span>🏠 Casa: <b>${_ca}</b> unid.</span></div>`+productos.map(p=>`<div class="card">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
       ${p.img?`<img src="${p.img}" style="width:36px;height:36px;border-radius:6px;object-fit:cover" onerror="this.style.display='none'">`:''}
       <div style="font-size:calc(var(--fs-mult,1)*14px);font-weight:700">${p.nombre}</div>
@@ -4144,7 +4166,7 @@ function renderStockRes(){
       ? (()=>{const st=p.stock||0;const icon=st===0?' ':st<=4?' ':'';return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px;background:var(--surface);border-radius:8px">
             <span style="flex:1;font-size:calc(var(--fs-mult,1)*13px);font-weight:600">Stock${icon}</span>
             <input type="number" min="0" value="${st}" style="width:70px;text-align:center" onchange="setStockBaseDirecto('${p.id}',this.value)">
-          </div>`;})()
+          </div>`+casaLinea(p.id,'',p);})()
       : (p.variantes||[]).map(v=>{
           const cls=v.stock===0?'stock-zero':v.stock<=4?'stock-low':'stock-ok';
           const icon=v.stock===0?' ':v.stock<=4?' ':'';
@@ -4154,7 +4176,7 @@ function renderStockRes(){
             <button onclick="adjStock('${p.id}','${v.id}',-1)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--red);font-size:calc(var(--fs-mult,1)*20px);font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">−</button>
             <span id="stk-${p.id}-${v.id}" class="stock-chip ${cls}" style="min-width:44px;justify-content:center;font-size:calc(var(--fs-mult,1)*15px);font-weight:700">${v.stock}</span>
             <button onclick="adjStock('${p.id}','${v.id}',1)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--green2);font-size:calc(var(--fs-mult,1)*20px);font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">+</button>
-          </div>`;
+          </div>`+casaLinea(p.id,v.id,v);
         }).join('')
     }
   </div>`).join('');
