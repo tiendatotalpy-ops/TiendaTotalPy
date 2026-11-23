@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Tienda Total">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#1C1F33">
 <title>Tienda Total PY</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,6 +17,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -632,6 +633,49 @@ body:not(.theme-light) .kb-col{background:var(--surface);border:1px solid var(--
 /* Títulos de cada ítem en verde de marca */
 .card-title,.mb-label,.saldo-label,.total-label,.section-title,.mb-sec-title{color:#75EF4B!important;font-weight:600!important}
 .theme-light .card-title,.theme-light .mb-label,.theme-light .saldo-label,.theme-light .total-label,.theme-light .section-title,.theme-light .mb-sec-title{color:#3DA81F!important}
+
+/* ═══ Diseño estilo Bellota (tema claro) ═══ */
+body.theme-light{
+  --bg:#F2F3F6;--surface:#FFFFFF;--card:#FFFFFF;--border:#DFE1E8;
+  --ink:#1C1F33;--ink-inv:#FFFFFF;--text:#1C1F33;--muted:#6B6F82;--faint:#ECEDF2;--tint:#F2F3F6;
+  --green:#17724A;--green2:#17724A;--green-dk:#0f5a39;
+  --blue:#2D43B3;--yellow:#A8650B;--red:#B42318;--purple:#5b42b8;
+  --radius:18px;--radius-sm:12px;
+  --shadow:0 1px 0 rgba(28,31,51,.04),0 8px 24px -12px rgba(28,31,51,.18);
+}
+body.theme-light,body.theme-light button,body.theme-light input,body.theme-light select,body.theme-light textarea{
+  font-family:'Bricolage Grotesque',ui-sans-serif,system-ui,sans-serif}
+body.theme-light{background:var(--bg);font-optical-sizing:auto}
+.theme-light .header{background:rgba(242,243,246,.92);backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid #ECEDF2}
+.theme-light .header-title{font-size:21px;font-weight:800;letter-spacing:-.02em}
+.theme-light .nav{background:#1C1F33;border-top:0;padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+.theme-light .nav-btn{color:#A9ACC2;border-radius:12px;font-weight:500}
+.theme-light .nav-btn.active{color:#fff;background:rgba(255,255,255,.09);font-weight:500}
+.theme-light .nav-btn.active svg{color:#fff}
+.theme-light .mb-h-title{font-size:30px;font-weight:700;letter-spacing:-.025em}
+.theme-light .section-title,.theme-light .mb-sec-title{font-size:19px;font-weight:700;letter-spacing:-.01em}
+.theme-light .card,.theme-light .mb-card,.theme-light .ld-card,.theme-light .list-item,.theme-light .kb-card,.theme-light .prod-card,.theme-light .ld-del{
+  border:1px solid #ECEDF2;border-radius:18px;box-shadow:var(--shadow)}
+.theme-light .btn,.theme-light .btn-outline,.theme-light .mb-btn,.theme-light .fs-btn{border-radius:999px}
+.theme-light .btn-green,.theme-light .mb-btn-dark{background:#1C1F33;color:#fff;border-color:#1C1F33}
+.theme-light .ld-b{border-radius:999px}
+.theme-light .ld-b.on,.theme-light .mb-pill.active,.theme-light .ld-pill.active,.theme-light .inner-tab.active{background:#1C1F33;border-color:#1C1F33;color:#fff}
+.theme-light input,.theme-light select,.theme-light textarea{border-radius:12px;border-color:#DFE1E8;background:#fff}
+.theme-light input:focus,.theme-light select:focus,.theme-light textarea:focus{border-color:#2D43B3;box-shadow:0 0 0 3px #E5E9FC}
+.theme-light .badge-yellow{background:#FDF0D5;color:#A8650B}
+.theme-light .badge-blue{background:#E5E9FC;color:#2D43B3}
+.theme-light .badge-green{background:#DCF1E6;color:#17724A}
+.theme-light .badge-red{background:#FBE4E1;color:#B42318}
+.theme-light .list-item-value,.theme-light .card-value,.theme-light .mb-value,.theme-light .ld-monto{font-variant-numeric:tabular-nums}
+@media (min-width:900px){
+  body.theme-light{padding-left:96px}
+  .theme-light .nav{top:0;right:auto;bottom:0;width:96px;flex-direction:column;justify-content:flex-start;padding:84px 10px 10px;gap:6px}
+  .theme-light .nav-btn{flex:none;padding:12px 4px}
+  .theme-light .header{margin-left:-96px;padding-left:112px}
+}
+.theme-light .card-title,.theme-light .mb-label,.theme-light .mb-h-sub{color:#6B6F82}
+.theme-light .card-title{font-weight:600;font-size:14px}
+.theme-light .green,.theme-light .list-item-value.green{color:#17724A}
 </style>
 </head>
 <body>
