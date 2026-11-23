@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1C1F33">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Entregas Tobi">
+<title>Entregas · Tobi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<style>
+:root{--ink:#1C1F33;--muted:#6B6F82;--paper:#F2F3F6;--surface:#fff;--line:#DFE1E8;--line2:#ECEDF2;
+--con:#2D43B3;--con-bg:#E5E9FC;--ent:#17724A;--ent-bg:#DCF1E6;--tom:#A8650B;--tom-bg:#FDF0D5;--neg:#B42318;
+--shadow:0 1px 0 rgba(28,31,51,.04),0 8px 24px -12px rgba(28,31,51,.18);--font:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.45}
+button,input{font:inherit;color:inherit}button{cursor:pointer}
+.num{font-variant-numeric:tabular-nums}
+.top{position:sticky;top:0;z-index:10;background:rgba(242,243,246,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line2)}
+.top-in{max-width:640px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;display:flex;align-items:center;gap:10px}
+.mark{font-weight:800;font-size:21px;letter-spacing:-.02em}
+.dot{width:8px;height:8px;border-radius:50%;background:#9A9DAD;margin-left:auto}.dot.on{background:#2FA36B}
+main{max-width:640px;margin:0 auto;padding:14px 16px 40px}
+.days{display:flex;gap:8px;margin-bottom:12px;align-items:center}
+.pill{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 16px;font-weight:600;font-size:15px}
+.pill.on{background:var(--ink);border-color:var(--ink);color:#fff}
+input[type=date]{border:1px solid var(--line);border-radius:999px;padding:8px 12px;background:#fff;flex:1;min-width:0}
+.sum{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
+.kpi{background:var(--surface);border:1px solid var(--line2);border-radius:18px;padding:14px;box-shadow:var(--shadow)}
+.kpi .l{color:var(--muted);font-size:13px;font-weight:500}.kpi .v{font-size:24px;font-weight:700;letter-spacing:-.02em;margin-top:2px}
+.kpi small{font-size:13px;font-weight:600;color:var(--muted);margin-right:3px}
+h2{font-size:19px;margin:24px 2px 10px;font-weight:700;display:flex;justify-content:space-between;align-items:baseline}
+h2 span{font-size:13px;color:var(--muted);font-weight:500}
+.card{background:var(--surface);border:1px solid var(--line2);border-radius:18px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
+.card.done{opacity:.62}
+.top-row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.n{font-size:13px;color:var(--muted);font-weight:600}
+.badge{font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--con-bg);color:var(--con)}
+.badge.e{background:var(--ent-bg);color:var(--ent)}
+.cli{font-size:18px;font-weight:700;letter-spacing:-.01em;margin-top:4px}
+.sub{color:var(--muted);font-size:14px;margin-top:2px}
+.sub a{color:var(--con);text-decoration:none;font-weight:600}
+.res{margin:8px 0;font-size:14.5px}
+.cobrar{display:flex;justify-content:space-between;align-items:center;background:var(--paper);border-radius:12px;padding:10px 12px;margin:8px 0;font-weight:700}
+.cobrar b{font-size:20px;letter-spacing:-.02em}
+.lbl{font-size:13px;font-weight:600;color:var(--muted);margin:10px 0 6px}
+.opts{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.opt{border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px 4px;font-size:14px;font-weight:600;text-align:center}
+.opt.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.cost{display:flex;gap:8px;align-items:center}
+.cost input{flex:1;min-width:0;border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:17px;font-weight:600;background:#fff}
+.cost input:focus{outline:none;border-color:var(--con);box-shadow:0 0 0 3px var(--con-bg)}
+.btn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px 16px;font-weight:600;font-size:15px}
+.btn.pri{background:var(--ink);color:#fff;border-color:var(--ink)}
+.acts{display:flex;gap:8px;margin-top:10px}
+.acts .btn{flex:1;text-align:center;text-decoration:none;color:var(--ink)}
+.empty{text-align:center;color:var(--muted);padding:26px 10px}
+.saved{color:var(--ent);font-size:13px;font-weight:600;min-height:18px;margin-top:6px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:999px;padding:10px 18px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="top"><div class="top-in"><div class="mark">Entregas · Tobi</div><div class="dot" id="dot"></div></div></div>
+<main>
+  <div class="days">
+    <button class="pill" id="b-hoy" onclick="setDia(0)">Hoy</button>
+    <button class="pill" id="b-man" onclick="setDia(1)">Mañana</button>
+    <input type="date" id="fecha" onchange="render()">
+  </div>
+  <div class="sum" id="sum"></div>
+  <div id="lista"><div class="empty">Cargando…</div></div>
+</main>
+<div class="toast" id="toast"></div>
+<script>
+firebase.initializeApp({apiKey:"AIzaSyD7nY2TnMNjFWxpsImm_j4KL6nfnmVyOy0",databaseURL:"https://tienda-total-py-default-rtdb.firebaseio.com"});
+const db=firebase.database();
+let pedidos=[];
+const gs=n=>'Gs. '+Math.round(n||0).toLocaleString('es-PY');
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function hoyStr(){return new Date(new Date().toLocaleString('en-US',{timeZone:'America/Asuncion'})).toISOString().slice(0,10).replace(/T.*/,'')}
+function ymd(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return y+'-'+m+'-'+dd}
+function fechaPY(off){const d=new Date(new Date().toLocaleString('en-US',{timeZone:'America/Asuncion'}));d.setDate(d.getDate()+off);return ymd(d)}
+function setDia(o){document.getElementById('fecha').value=fechaPY(o);render()}
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1600)}
+db.ref('.info/connected').on('value',s=>document.getElementById('dot').className='dot'+(s.val()?' on':''));
+db.ref('pedidos').on('value',s=>{
+  const v=s.val()||{};
+  pedidos=Object.keys(v).map(k=>Object.assign({_k:k},v[k])).filter(p=>p&&typeof p==='object');
+  if(!document.activeElement||document.activeElement.tagName!=='INPUT'||document.activeElement.id==='fecha')render();
+});
+document.getElementById('fecha').value=fechaPY(0);
+function waLink(tel){
+  let n=String(tel||'').replace(/[^\d+]/g,'');if(!n)return '';
+  if(n.startsWith('+'))n=n.slice(1);else if(n.startsWith('0'))n='595'+n.slice(1);else if(!n.startsWith('595'))n='595'+n;
+  return /android/i.test(navigator.userAgent)?'intent://send?phone='+n+'#Intent;scheme=whatsapp;package=com.whatsapp.w4b;S.browser_fallback_url=https%3A%2F%2Fwa.me%2F'+n+';end':'https://wa.me/'+n;
+}
+function card(p){
+  const ent=p.estado==='entregado';
+  const ubi=p.ubicacion?(/^https?:\/\//i.test(p.ubicacion)?p.ubicacion:'https://www.google.com/maps/search/'+encodeURIComponent(p.ubicacion)):'';
+  const fp=p.formaPagoDelivery||'';
+  const aCobrar=(fp==='pagado'||p.pagado)?0:(p.montoFinal||0);
+  const wa=waLink(p.telefono);
+  const k=esc(p._k);
+  return `<div class="card ${ent?'done':''}">
+    <div class="top-row"><span class="n">#${esc(p.numero||'-')}</span><span class="badge ${ent?'e':''}">${ent?'Entregado':'Por entregar'}</span></div>
+    <div class="cli">${esc(p.cliente||'Sin nombre')}</div>
+    <div class="sub">${esc(p.ciudad||'')}${p.telefono?' · '+esc(p.telefono):''}</div>
+    ${ubi?`<div class="sub"><a href="${esc(ubi)}" target="_blank" rel="noopener">📍 ${esc(p.ubicacion)}</a></div>`:'<div class="sub" style="color:var(--tom)">📍 Falta dirección</div>'}
+    ${p.nota?`<div class="sub">📝 ${esc(p.nota)}</div>`:''}
+    <div class="res">${esc(p.resumen||'')}</div>
+    <div class="cobrar"><span>${fp==='pagado'||p.pagado?'Ya pagado':'A cobrar'}</span><b class="num">${gs(aCobrar)}</b></div>
+    <div class="lbl">Forma de pago</div>
+    <div class="opts">
+      ${[['efectivo','Efectivo'],['transferencia','Transfer.'],['pagado','Ya pagado']].map(o=>`<button class="opt ${fp===o[0]?'on':''}" onclick="setPago('${k}','${o[0]}')">${o[1]}</button>`).join('')}
+    </div>
+    <div class="lbl">Cuánto me salió esta entrega</div>
+    <div class="cost"><input type="number" inputmode="numeric" id="c-${k}" placeholder="0" value="${p.costoDelivery!=null?p.costoDelivery:''}"><button class="btn pri" onclick="saveCosto('${k}')">Guardar</button></div>
+    <div class="saved" id="s-${k}">${p.costoDelivery!=null?'Guardado: '+gs(p.costoDelivery):''}</div>
+    <div class="acts">${wa?`<a class="btn" href="${esc(wa)}">WhatsApp</a>`:''}${p.telefono?`<a class="btn" href="tel:${esc(p.telefono)}">Llamar</a>`:''}</div>
+  </div>`;
+}
+function render(){
+  const f=document.getElementById('fecha').value||fechaPY(0);
+  document.getElementById('b-hoy').classList.toggle('on',f===fechaPY(0));
+  document.getElementById('b-man').classList.toggle('on',f===fechaPY(1));
+  const list=pedidos.filter(p=>p.delivery==='tobi'&&!p.interior&&(p.estado==='confirmado'||p.estado==='entregado')&&(p.fechaEntrega||p.fecha)===f)
+    .sort((a,b)=>(a.numero||0)-(b.numero||0));
+  const cobr=list.reduce((s,p)=>s+((p.formaPagoDelivery==='pagado'||p.pagado)?0:(p.montoFinal||0)),0);
+  const costo=list.reduce((s,p)=>s+(Number(p.costoDelivery)||0),0);
+  document.getElementById('sum').innerHTML=
+    `<div class="kpi"><div class="l">Entregas del día</div><div class="v num">${list.length}</div></div>
+     <div class="kpi"><div class="l">A cobrar</div><div class="v num"><small>Gs.</small>${Math.round(cobr).toLocaleString('es-PY')}</div></div>
+     <div class="kpi" style="grid-column:1/3"><div class="l">Costo total de las entregas</div><div class="v num"><small>Gs.</small>${Math.round(costo).toLocaleString('es-PY')}</div></div>`;
+  if(!list.length){document.getElementById('lista').innerHTML='<div class="empty">Sin entregas para este día</div>';return;}
+  const grupos=[['manana','🌅 Mañana'],['tarde','🌇 Tarde'],['','Sin turno']];
+  document.getElementById('lista').innerHTML=grupos.map(g=>{
+    const l=list.filter(p=>(p.turno||'')===g[0]);
+    if(!l.length)return '';
+    const c=l.reduce((s,p)=>s+(Number(p.costoDelivery)||0),0);
+    return `<h2>${g[1]} <span>${l.length} pedido${l.length===1?'':'s'}${c?' · salió '+gs(c):''}</span></h2>`+l.map(card).join('');
+  }).join('');
+}
+async function setPago(k,v){
+  const p=pedidos.find(x=>x._k===k);if(!p)return;
+  const nuevo=p.formaPagoDelivery===v?null:v;
+  try{await db.ref('pedidos/'+k+'/formaPagoDelivery').set(nuevo);toast(nuevo?'Pago: '+({efectivo:'Efectivo',transferencia:'Transferencia',pagado:'Ya pagado'})[nuevo]:'Pago desmarcado')}catch(e){toast('No se pudo guardar')}
+}
+async function saveCosto(k){
+  const i=document.getElementById('c-'+k);const raw=i.value.trim();
+  const val=raw===''?null:Math.max(0,Math.round(Number(raw)));
+  if(raw!==''&&isNaN(val)){toast('Número inválido');return}
+  try{await db.ref('pedidos/'+k+'/costoDelivery').set(val);toast('Guardado')}catch(e){toast('No se pudo guardar')}
+}
+</script>
+</body>
+</html>
