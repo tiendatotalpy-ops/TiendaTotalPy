@@ -3363,6 +3363,7 @@ function renderPorDelivery(){
         <div class="ld-res">${p.resumen||''}</div>
         <div class="ld-row">
           <button class="ld-b" onclick="generarMensajeDelivery('${id}')">Mensaje delivery</button>
+          ${p.telefono?`<button class="ld-b b-wa" onclick="contactarClienteWA('${p.telefono}')">WhatsApp</button>`:''}
           ${ent?'':`<button class="ld-b b-conf" onclick="cambiarEstado('${k2}','entregado')">Entregado</button>`}
           <button class="ld-b" onclick="ldEditar('${k2}')">Editar</button>
         </div>
@@ -3387,6 +3388,7 @@ function renderPorDelivery(){
         <div class="ld-cli">${p.cliente||'Sin nombre'}</div>
         <div class="ld-sub">${p.ciudad||'-'}${p.telefono?' · '+p.telefono:''}</div>
         <div class="ld-res">${p.resumen||''}</div>
+        ${p.telefono?`<div class="ld-row"><button class="ld-b b-wa" onclick="event.stopPropagation();contactarClienteWA('${p.telefono}')">WhatsApp</button></div>`:''}
       </div>`).join('')}
     </div>`:'';
   document.getElementById('pd-grupos').innerHTML=html+tomHtml;
@@ -3595,6 +3597,7 @@ function renderEntregas(){
           <div style="font-size:15px;font-weight:800;color:var(--green2)">${fmt(p.montoFinal)}</div>
         </div>
       </div>
+      ${p.telefono?`<button class="btn btn-outline" style="color:#25D366;margin-top:8px;padding:8px 2px;width:100%" onclick="event.stopPropagation();contactarClienteWA('${p.telefono}')">WhatsApp</button>`:''}
     </div>`;
   }).join('');
 }
